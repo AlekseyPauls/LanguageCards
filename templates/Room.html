@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Room</title>
+
+  <!-- Bootstrap -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
+  integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+
+  <style type="text/css">
+    div.container {
+      width: 40%; /* Ширина слоя */
+      margin-right: auto;
+      margin-left: auto;
+      text-align: center;
+    }
+    div.card {
+      width: 50%;
+      height: 200px;
+      margin-right: auto;
+      margin-left: auto;
+      background: lightblue;
+      padding: 15px;
+      border: solid 3px mediumblue;
+      border-radius: 30px;
+      text-align: center;
+    }
+    button.my-but {
+      width: 140px;
+      height: 40px;
+      margin-top: 15px;
+      margin-left: auto;
+      margin-right: auto;
+      font-size: 16pt;
+    }
+    td.my-td {
+      vertical-align: middle;
+      align: center;
+      height: 170px;
+      word-break: break-all;
+      font-size: 16pt;
+    }
+  </style>
+</head>
+  <body>
+    <div class="text-center well" style="font-size: 20px; "><b>Room {{room_id}}</b></div>
+
+    <div class="container">
+      <form action="" method="post" id="deckForm">
+        <div id="card" class="card">
+          <table width="100%">
+          <tbody>
+            <tr>
+              <td class="my-td" id="word"></td>
+            </tr>
+          </tbody>
+        </table>
+        </div>
+        <button id="get_word" class="btn btn-success btn-block my-but" > New word</button>
+      </form>
+    </div>
+
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.7.3/socket.io.min.js"></script>
+    <script>
+      var socket = io('http://' + document.domain + ':' + location.port)
+      var room_id = location.href.substr(location.href.lastIndexOf("/")+1)
+
+      socket.on('connect', function() {
+        console.log('room id is ' + room_id)
+        socket.emit('join game room', room_id)
+        socket.emit('prepare room', room_id)
+
+        $('#get_word').on('click', function(e) {
+          e.preventDefault()
+          socket.emit('send new word', room_id)
+        })
+      })
+
+      socket.on('disconnect', function() {
+        console.log('Got disconnect!');
+        socket.emit('leave', room_id)
+      })
+
+      socket.on('get state', function(data) {
+        localStorage[room_id] = data['deck']
+        $('#word').text(data['word'])
+        //console.log(localStorage['deck'])
+      })
+
+      socket.on('get new word', function(word) {
+        console.log(word)
+        $('#word').text(word)
+        //console.log(localStorage['deck'])
+      })
+
+      window.onbeforeunload = function() {
+          socket.emit('leave', room_id)
+      }
+    </script>
+  </body>
+</html>
