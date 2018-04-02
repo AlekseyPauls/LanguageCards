@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
     integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
 
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.16/css/dataTables.jqueryui.min.css">
     <style type="text/css">
       div.container {
         width: 40%; /* Ширина слоя */
@@ -19,17 +20,17 @@
       }
       th, td {
         padding: 10px;
-        font-size: 16pt;
+        font-size: 14pt;
       }
       button.my-btn {
         width: 140px;
         height: 40px;
-        font-size: 16pt;
+        font-size: 14pt;
       }
       textarea.my-ta {
         width: 100%;
         height: 100%;
-        font-size: 16pt;
+        font-size: 14pt;
       }
     </style>
 
@@ -43,58 +44,139 @@
   <body>
     <div class="text-center well" style="font-size: 20pt;"><b>LanguageCards</b></div>
 
-    <div class="container">
-      <form action="" method="post" id="joinForm" >
+    <!--<div class="container">-->
+      <!--<form action="" method="post" id="joinForm" >-->
+        <!--<table width="100%">-->
+          <!--<tbody>-->
+            <!--<tr>-->
+              <!--<td align="right" width="30%"><b>Enter room ID: </b></td>-->
+              <!--<td><input type="text" id="roomId" class="form-control" style="font-size: 14pt;" placeholder="Room ID"></td>-->
+            <!--</tr>-->
+            <!--<tr>-->
+              <!--<td align="right" valign="top"><b>Choose deck:</b></td>-->
+              <!--<td height="250"><textarea id="deck" class="form-control my-ta" placeholder="Enter your deck"></textarea></td>-->
+            <!--</tr>-->
+            <!--<tr>-->
+              <!--<td><button type="button" id="createDeck" class="btn btn-default btn-block my-btn"> Create deck</button></td>-->
+              <!--<td><button type="submit" id="start" class="btn btn-success btn-block my-btn"> Start</button></td>-->
+            <!--</tr>-->
+          <!--</tbody>-->
+        <!--</table>-->
+        <!--<table id="table" class="table table-striped table-bordered" style="width:100%">-->
+          <!--<thead>-->
+            <!--<tr>-->
+                <!--<th>Name</th>-->
+                <!--<th>Length</th>-->
+                <!--<th>Description</th>-->
+            <!--</tr>-->
+          <!--</thead>-->
+          <!--<tbody></tbody>-->
+        <!--</table>-->
+
+        <div class="container">
+          <form action="" method="post" id="joinForm" >
         <table width="100%">
           <tbody>
             <tr>
               <td align="right" width="30%"><b>Enter room ID: </b></td>
-              <td><input type="text" id="roomId" class="form-control" style="font-size: 16pt;" placeholder="Room ID"></td>
+              <td><input type="text" id="roomId" class="form-control" style="font-size: 14pt;" placeholder="Room ID"></td>
             </tr>
             <tr>
-              <td align="right" valign="top"><b>Enter your deck:</b></td>
-              <td height="250"><textarea id="deck" class="form-control my-ta" placeholder="Enter your deck"></textarea></td>
+              <td align="right" valign="top"><b>Choose deck:</b></td>
             </tr>
+          </tbody>
+        </table>
+        <table id="table" class="table table-striped table-bordered" style="width:100%">
+          <thead>
             <tr>
-              <td></td>
-              <td><button type="submit" id="start" class="btn btn-success btn-block my-btn"> Start</button></td>
+                <th>Name</th>
+                <th>Length</th>
+                <th>Description</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <table width="100%">
+          <tbody>
+            <tr>
+              <td align="right" width="30%"></td>
+              <td style="text-align: left;">
+                <div class="btn-group">
+                  <button type="submit" id="start" class="btn btn-success my-btn"> Start</button>
+                  <button type="button" id="createDeck" class="btn btn-primary my-btn"> Create deck</button>
+                </div>
+              </td>
             </tr>
           </tbody>
         </table>
       </form>
     </div>
 
-
-
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.7.3/socket.io.min.js"></script>
     <script src=https://cdnjs.cloudflare.com/ajax/libs/mathjs/3.3.0/math.min.js></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/v/dt/dt-1.10.16/datatables.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/select/1.2.5/js/dataTables.select.min.js"></script>
+
     <script>
       var socket = io('http://' + document.domain + ':' + location.port)
       console.log('http://' + document.domain + ':' + location.port)
+      var t = $('#table').DataTable({
+        "scrollY": "300px",
+        "paging": false,
+        "info": false
+      });
+
 
       socket.on('connect', function() {
         socket.emit('join single room', socket.id)
+        socket.emit('send table', socket.id)
+
         $('#joinForm').on('submit', function(e) {
           e.preventDefault()
           var room_id = $('#roomId').val()
-          var deck = $('#deck').val()
+          var deck_name = t.row('.selected').data()[0]
+          console.log(deck_name)
           console.log(room_id + "  " + socket.id)
-          socket.emit('get deck', {
+          socket.emit('start game', {
             'current room' : socket.id,
             'new room' : room_id,
-            'deck' : deck
+            'deck_name' : deck_name
           })
           $('#roomId').val('').focus()
           $('#deck').val('').focus()
         })
+        $('#createDeck').on('click', function(e) {
+          e.preventDefault()
+          socket.emit('redirect to CreateDeck', {
+            'room' : socket.id
+          })
+          $('#roomId').val('').focus()
+          $('#deck').val('').focus()
+        })
+
+        $('#table tbody').on( 'click', 'tr', function () {
+          t.rows().deselect()
+          $(this).addClass('selected')
+        });
       })
 
       socket.on('redirect', function(msg) {
         console.log(msg)
         if(typeof msg.url !== 'undefined') {
           window.location = msg.url
+        }
+      })
+
+      socket.on('make table', function(msg) {
+      console.log(msg)
+        for (var i = 0; i < msg.length; i++) {
+          t.row.add( [
+            msg[i]['name'],
+            msg[i]['length'],
+            msg[i]['description']
+          ]).draw( false );
         }
       })
     </script>

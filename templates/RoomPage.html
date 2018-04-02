@@ -35,14 +35,14 @@
       margin-top: 15px;
       margin-left: auto;
       margin-right: auto;
-      font-size: 16pt;
+      font-size: 14pt;
     }
     td.my-td {
       vertical-align: middle;
       align: center;
       height: 170px;
       word-break: break-all;
-      font-size: 16pt;
+      font-size: 14pt;
     }
   </style>
 </head>
@@ -51,16 +51,16 @@
 
     <div class="container">
       <form action="" method="post" id="deckForm">
-        <div id="card" class="card">
+        <div id="card_field" class="card">
           <table width="100%">
           <tbody>
             <tr>
-              <td class="my-td" id="word"></td>
+              <td class="my-td" id="card"></td>
             </tr>
           </tbody>
         </table>
         </div>
-        <button id="get_word" class="btn btn-success btn-block my-but" > New word</button>
+        <button type="button" id="get_card" class="btn btn-success btn-block my-but" > New word</button>
       </form>
     </div>
 
@@ -76,9 +76,9 @@
         socket.emit('join game room', room_id)
         socket.emit('prepare room', room_id)
 
-        $('#get_word').on('click', function(e) {
+        $('#get_card').on('click', function(e) {
           e.preventDefault()
-          socket.emit('send new word', room_id)
+          socket.emit('send new card', room_id)
         })
       })
 
@@ -87,16 +87,14 @@
         socket.emit('leave', room_id)
       })
 
-      socket.on('get state', function(data) {
-        localStorage[room_id] = data['deck']
-        $('#word').text(data['word'])
-        //console.log(localStorage['deck'])
+      socket.on('get state', function(card) {
+        //localStorage[room_id] = data['deck']
+        $('#card').text(card)
       })
 
-      socket.on('get new word', function(word) {
-        console.log(word)
-        $('#word').text(word)
-        //console.log(localStorage['deck'])
+      socket.on('get new card', function(card) {
+        console.log(card)
+        $('#card').text(card)
       })
 
       window.onbeforeunload = function() {
