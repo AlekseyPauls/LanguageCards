@@ -5,7 +5,7 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <title>Create deck</title>
+  <title>Edit deck</title>
 
   <!-- Bootstrap -->
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
@@ -49,35 +49,59 @@
       /* To center horizontally */
       margin: 0 auto;
     }
+    //b {
+    //  font-size: 14pt;
+    //}
   </style>
 </head>
   <body>
-    <div class="text-center well" style="font-size: 20px; "><b>Create deck</b></div>
-
-    <div class="well container">
-      <form action="" method="post" id="deckForm">
-        <table width="100%">
-          <tbody>
-            <tr>
-              <td align="right" width="30%"><b>Name: </b></td>
-              <td><input type="text" id="name" class="form-control" style="font-size: 14pt;" placeholder="Deck name"></td>
-            </tr>
-            <tr>
-              <td align="right" valign="top"><b>Description:</b></td>
-              <td height="250"><textarea id="description" class="form-control my-ta" placeholder="Add description"></textarea></td>
-            </tr>
-            <tr>
-              <td></td>
-              <td style="text-align: left;">
-                <div class="btn-group">
-                  <button type="button" id="continue" class="btn btn-success my-btn"> Continue</button>
-                  <button type="button" id="back" class="btn btn-primary my-btn"> Back</button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </form>
+    <div class="text-center well" style="font-size: 20px; "><b>Edit deck</b></div>
+    <div class=" well container">
+      <b style="font-size: 16pt;">Info</b>
+      <table width="100%">
+        <tbody>
+          <tr>
+            <td align="right" width="15%"><b>Name: </b></td>
+            <td align="left"><b id="name"> </b></td>
+          </tr>
+          <tr>
+            <td align="right" width="15%"><b>Description: </b></td>
+            <td align="left"><b id="description"> </b></td>
+          </tr>
+          <tr>
+            <td align="right"><b>Length:</b></td>
+            <td align="left"><b id="length"> </b></td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="panel panel-success">
+        <div class="panel-heading">
+          <div class="panel-title" style="font-weight:bold; font-size: 14pt;">
+            <a data-toggle="collapse" href="#collapse1">Add card</a>
+          </div>
+        </div>
+        <div id="collapse1" class="panel-collapse collapse">
+          <div class="panel-body">
+            <form action="" method="post" id="cardForm">
+              <table width="100%">
+                <tbody>
+                  <tr>
+                    <td align="right" width="15%"><b>Image: </b></td>
+                    <td><input type="file" id="image" accept="image/*"></td>
+                  </tr>
+                  <tr>
+                    <td align="right"><b>Text:</b></td>
+                    <td><input type="text" id="text" class="form-control" style="font-size: 14pt;" placeholder="Text"></td>
+                  </tr>
+                </tbody>
+              </table>
+              <button type="submit" id="save_card" class="btn btn-success my-btn">Save card</button>
+            </form>
+          </div>
+        </div>
+      </div>
+        <button type="button" id="back" class="btn btn-primary my-btn">Back</button>
+      </div>
     </div>
 
     <div id="modal" class="modal fade" role="dialog">
@@ -99,22 +123,34 @@
     <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
     <script>
       var socket = io('http://' + document.domain + ':' + location.port)
+      var name = location.href.substr(location.href.lastIndexOf("/")+1)
+      $('#name').text(name)
 
       socket.on('connect', function() {
         console.log('join CreateDeck')
         socket.emit('join single room', socket.id)
+        socket.emit('send deck info', {
+          'room': socket.id,
+          'name': name
+        })
 
-        $('#continue').on('click', function(e) {
+        $('#cardForm').on('submit', function(e) {
           e.preventDefault()
-          var name = $('#name').val()
-          var description = $('#description').val()
-          socket.emit('save deck', {
+          var text = $('#text').val()
+          //var image = $('#image').files(0)
+          var image = document.getElementById('image').files[0]
+          if (image == undefined) {
+            image = ''
+          }
+          console.log(image)
+          socket.emit('save card', {
             'room' : socket.id,
-            'name' : name,
-            'description' : description
+            'deck_name' : name,
+            'text' : text,
+            'image' : image
           })
-          $('#name').val('').focus()
-          $('#description').val('').focus()
+          $('#text').val('').focus()
+          $('#image').val('').focus()
         })
         $('#back').on('click', function(e) {
           e.preventDefault()
@@ -122,6 +158,12 @@
             'room' : socket.id
           })
         })
+      })
+
+      socket.on('get deck info', function(data) {
+        console.log(data)
+        $('#length').text(data.length)
+        $('#description').text(data.description)
       })
 
       socket.on('message', function(mes) {

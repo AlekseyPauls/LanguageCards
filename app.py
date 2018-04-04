@@ -1,10 +1,10 @@
-from flask import Flask, render_template, redirect, url_for
+from flask import Flask, render_template, redirect, url_for, send_file
 from flask_socketio import SocketIO, join_room, leave_room, rooms
 import random
 import os
 
 from mongoengine import *
-from models import Deck
+from models import Card, Deck
 
 
 app = Flask(__name__)
@@ -32,6 +32,22 @@ db = connect(MONGO['db'], host=MONGO['host'])
 rooms = {}
 
 
+""" Routing """
+
+
+@app.route('/cards/<deck_name><int:card>')
+def cards(deck_name, card):
+    deck = Deck.objects(Q(name=deck_name)).first()
+    card = deck.cards[card]
+    return send_file(card.image, mimetype='image')
+
+
+@app.route('/base_card')
+def base_card():
+    base_card = open('static/1.png', 'rb')
+    return send_file(base_card, mimetype='image')
+
+
 @app.route('/')
 def start():
     return render_template('./StartPage.html')
@@ -47,68 +63,12 @@ def create_deck():
     return render_template('./CreateDeckPage.html')
 
 
-@socketio.on('start game')
-def start_game(data):
-    global rooms
-    new_room = data['new room']
-    room = data['current room']
-    room_state = {}
-    room_state['deck_name'] = data['deck_name']
-    room_state['clients'] = 0
-    room_state['current card'] = get_cards(data['deck_name'])[0]
-    rooms[new_room] = room_state
-    #print('Redirect to new room: ' + str(new_room) + '   ' + str(room))
-    socketio.emit('redirect', {'url': url_for('room', room_id=new_room)}, room=room)
+@app.route('/edit_deck/<name>')
+def edit_deck(name):
+    return render_template('./EditDeckPage.html', name=name)
 
 
-@socketio.on('redirect to CreateDeck')
-def redirect_to_CreateDeck(room):
-    room = room['room']
-    socketio.emit('redirect', {'url': url_for('create_deck')}, room=room)
-
-
-@socketio.on('redirect to Start')
-def redirect_to_Start(room):
-    room = room['room']
-    socketio.emit('redirect', {'url': url_for('start')}, room=room)
-
-
-@socketio.on('save deck')
-def save_deck(data):
-    room = data['room']
-    cards = data['cards'].split('\n')
-    deck = {}
-    deck['name'] = data['name']
-    deck['description'] = data['description']
-    deck['cards'] = cards
-    deck['length'] = len(cards)
-
-    res = save_to_db(deck)
-    if res:
-        socketio.emit('message', 'Deck was saved!', room=room)
-    else:
-        socketio.emit('message', 'Can`t save deck: name is already using', room=room)
-
-
-@socketio.on('prepare room')
-def prepare_room(room):
-    card = (rooms[room])['current card']
-    #print('Prepare room: ' + str(room) + '   ' + card)
-    socketio.emit('get state', card, room=room)
-
-
-@socketio.on('join single room')
-def join_single_room(room):
-    join_room(room)
-    #print('Has entered the single room: ' + str(room))
-
-
-@socketio.on('join game room')
-def join_game_room(room):
-    global rooms
-    join_room(room)
-    (rooms[room])['clients'] += 1
-    #print('Has entered the game room: ' + str(room) + '. Now clients: ' + str((rooms[room])['clients']))
+""" Start page """
 
 
 @socketio.on('send table')
@@ -120,6 +80,68 @@ def send_table(room):
     socketio.emit('make table', deck_list, room=room)
 
 
+@socketio.on('start game')
+def start_game(data):
+    global rooms
+    new_room = data['new room']
+    room = data['current room']
+    room_state = {}
+    room_state['deck_name'] = data['deck_name']
+    room_state['clients'] = 0
+    room_state['current card'] = random_card(data['deck_name'])
+    rooms[new_room] = room_state
+    #print('Redirect to new room: ' + str(new_room) + '   ' + str(room))
+    socketio.emit('redirect', url_for('room', room_id=new_room), room=room)
+
+
+@socketio.on('redirect to CreateDeck')
+def redirect_to_CreateDeck(room):
+    room = room['room']
+    socketio.emit('redirect', url_for('create_deck'), room=room)
+
+
+""" Create deck page """
+
+
+@socketio.on('save deck')
+def save_deck(data):
+    room = data['room']
+    deck = {}
+    deck['name'] = data['name']
+    deck['description'] = data['description']
+    deck['length'] = 0
+
+    res = save_deck_to_db(deck)
+    if res:
+        socketio.emit('redirect', url_for('edit_deck', name=deck['name']), room=room)
+    else:
+        socketio.emit('message', 'Can`t save deck: name is already using', room=room)
+
+
+
+""" Edit deck page """
+
+
+@socketio.on('save card')
+def save_card(data):
+    room = data['room']
+    save_card_to_db(data)
+    deck = Deck.objects(Q(name=data['deck_name'])).first()
+    socketio.emit('get deck info', {'length': deck.length, 'description': deck.description}, room=room)
+
+
+
+""" Room page """\
+
+
+@socketio.on('join game room')
+def join_game_room(room):
+    global rooms
+    join_room(room)
+    (rooms[room])['clients'] += 1
+    #print('Has entered the game room: ' + str(room) + '. Now clients: ' + str((rooms[room])['clients']))
+
+
 @socketio.on('leave game room')
 def on_leave(room):
     global rooms
@@ -128,18 +150,60 @@ def on_leave(room):
     #print('Has leaved the room: ' + str(room) + '. Now clients: ' + str((rooms[room])['clients']))
 
 
+@socketio.on('send deck info')
+def send_deck_infok(data):
+    room = data['room']
+    name = data['name']
+    deck = Deck.objects(Q(name=name)).first()
+    socketio.emit('get deck info', {'length': deck.length, 'description': deck.description}, room=room)
+
+
+@socketio.on('prepare room')
+def prepare_room(room):
+    card = (rooms[room])['current card']
+    #print('Prepare room: ' + str(room) + '   ' + card)
+    socketio.emit('get new card', {'text': card['text'], 'image': card['image']}, room=room)
+
+
 @socketio.on('send new card')
 def send_new_card(room):
     global rooms
-    new_card = random_card(get_cards((rooms[room])['deck_name']))
+    new_card = random_card((rooms[room])['deck_name'])
     (rooms[room])['current card'] = new_card
     #print('New current card for room: ' + str(room) + ' ' + (rooms[room])['current card'])
-    socketio.emit('get new card', new_card, room=room)
+    socketio.emit('get new card', {'text': new_card['text'], 'image': new_card['image']}, room=room)
 
 
+""" Common """
 
-def random_card(cards):
-    return random.choice(cards)
+
+@socketio.on('join single room')
+def join_single_room(room):
+    join_room(room)
+    #logging
+    app.logger.debug('A value for debugging')
+    app.logger.warning('A warning occurred (%d apples)', 42)
+    app.logger.error('An error occurred')
+    #print('Has entered the single room: ' + str(room))
+
+
+@socketio.on('redirect to Start')
+def redirect_to_Start(room):
+    room = room['room']
+    socketio.emit('redirect', url_for('start'), room=room)
+
+
+""" Database using """
+
+
+def random_card(deck_name):
+    deck = Deck.objects(Q(name=deck_name)).first()
+    r = random.randint(0, deck.length - 1)
+    card = deck.cards[r]
+    if card.image:
+        return {'text': card.text, 'image': url_for('cards', deck_name=deck_name, card=r)}
+    else:
+        return {'text': card.text, 'image': ''}
 
 
 def get_deck_list():
@@ -149,16 +213,30 @@ def get_deck_list():
     return deck_list
 
 
-def save_to_db(deck):
+def save_deck_to_db(deck):
     if Deck.objects(Q(name=deck['name'])).first() is not None:
         return False
-    new_deck = Deck(deck['name'], deck['description'], deck['cards'], deck['length'])
+    new_deck = Deck(name=deck['name'], description=deck['description'], length=deck['length'])
     new_deck.save()
     return True
+
+
+def save_card_to_db(card):
+    new_card = Card(text=card['text'])
+    if card['image'] != '':
+      new_card.image.put(card['image'], content_type = 'image/')
+    deck = Deck.objects(Q(name=card['deck_name'])).first()
+    deck.cards.append(new_card)
+    deck.length += 1
+    deck.save()
+
 
 def get_cards(deck_name):
     deck = Deck.objects(Q(name=deck_name)).first()
     return deck.cards
+
+
+""" Application """
 
 
 if __name__ == '__main__':
