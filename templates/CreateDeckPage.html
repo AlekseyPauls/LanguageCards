@@ -55,11 +55,10 @@
     <div class="text-center well" style="font-size: 20px; "><b>Create deck</b></div>
 
     <div class="well container">
-      <form action="" method="post" id="deckForm">
         <table width="100%">
           <tbody>
             <tr>
-              <td align="right" width="30%"><b>Name: </b></td>
+              <td align="right" width="15%"><b>Name: </b></td>
               <td><input type="text" id="name" class="form-control" style="font-size: 14pt;" placeholder="Deck name"></td>
             </tr>
             <tr>
@@ -67,17 +66,24 @@
               <td height="250"><textarea id="description" class="form-control my-ta" placeholder="Add description"></textarea></td>
             </tr>
             <tr>
+              <td align="right" valign="top"><b>Cards:</b></td>
+              <td height="250"><textarea id="cards" class="form-control my-ta" placeholder="Write cards. New line - new card. Use '/' to separate lines in one card"></textarea></td>
+            </tr>
+            <tr>
+              <td align="right"><b>Import: </b></td>
+              <td><input type="file" id="file" accept="text/"></td>
+            </tr>
+            <tr>
               <td></td>
               <td style="text-align: left;">
                 <div class="btn-group">
-                  <button type="button" id="continue" class="btn btn-success my-btn"> Continue</button>
+                  <button type="button" id="save" class="btn btn-success my-btn"> Save</button>
                   <button type="button" id="back" class="btn btn-primary my-btn"> Back</button>
                 </div>
               </td>
             </tr>
           </tbody>
         </table>
-      </form>
     </div>
 
     <div id="modal" class="modal fade" role="dialog">
@@ -104,17 +110,23 @@
         console.log('join CreateDeck')
         socket.emit('join single room', socket.id)
 
-        $('#continue').on('click', function(e) {
+        $('#save').on('click', function(e) {
           e.preventDefault()
           var name = $('#name').val()
           var description = $('#description').val()
+          var cards = $('#cards').val()
+          var file = document.getElementById('file').files[0]
           socket.emit('save deck', {
             'room' : socket.id,
             'name' : name,
-            'description' : description
+            'description' : description,
+            'cards' : cards,
+            'file' : file
           })
           $('#name').val('').focus()
           $('#description').val('').focus()
+          $('#cards').val('').focus()
+          $('#file').val('').focus()
         })
         $('#back').on('click', function(e) {
           e.preventDefault()

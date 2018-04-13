@@ -43,19 +43,9 @@
   </head>
   <body>
     <div class="text-center well" style="font-size: 20pt;"><b>LanguageCards</b></div>
-        <div class="well container">
-          <form action="" method="post" id="joinForm">
-        <table width="100%">
-          <tbody>
-            <tr>
-              <td align="right" width="30%"><b>Enter room ID: </b></td>
-              <td><input type="text" id="roomId" class="form-control" style="font-size: 14pt;" placeholder="Room ID"></td>
-            </tr>
-            <tr>
-              <td align="right" valign="top"><b>Choose deck:</b></td>
-            </tr>
-          </tbody>
-        </table>
+    <div class="well container">
+      <form action="" method="post" id="joinForm">
+        <div style="font-size: 16pt; text-align: center; font-weight: bold;">Choose decks:</div>
         <table id="table" class="table table-striped table-bordered" style="width:100%">
           <thead>
             <tr>
@@ -106,14 +96,17 @@
 
         $('#joinForm').on('submit', function(e) {
           e.preventDefault()
-          var room_id = $('#roomId').val()
-          var deck_name = t.row('.selected').data()[0]
-          console.log(deck_name)
-          console.log(room_id + "  " + socket.id)
+
+          var decks = []
+          rows = t.rows('.selected').data()
+          for (var i = 0; i < rows.length; i++) {
+            decks.push(rows[i][0])
+          }
+
+          console.log(decks)
           socket.emit('start game', {
-            'current room' : socket.id,
-            'new room' : room_id,
-            'deck_name' : deck_name
+            'current_room' : socket.id,
+            'decks' : decks
           })
           $('#roomId').val('').focus()
           $('#deck').val('').focus()
@@ -128,8 +121,11 @@
         })
 
         $('#table tbody').on( 'click', 'tr', function () {
-          t.rows().deselect()
-          $(this).addClass('selected')
+          if ($(this).hasClass('selected')) {
+            t.row(this).deselect()
+          } else {
+            t.row(this).select()
+          }
         });
       })
 

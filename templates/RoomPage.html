@@ -17,22 +17,9 @@
 
   <style type="text/css">
     div.container {
-      width: 40%; /* Ширина слоя */
+      width: 70%; /* Ширина слоя */
       margin-right: auto;
       margin-left: auto;
-      text-align: center;
-    }
-    div.card-text {
-      width: 70%;
-      height: 20vh;
-      margin-right: auto;
-      margin-left: auto;
-      //background: lightblue;
-      //padding: 15px;
-      //border: solid 3px mediumblue;
-      //border-radius: 30px;
-      //background-image: url(/base_card);
-      //background-size: cover;
       text-align: center;
     }
     button.my-but {
@@ -43,68 +30,138 @@
       margin-right: auto;
       font-size: 14pt;
     }
-    td.my-td {
-      vertical-align: middle;
-      align: center;
-      height: 170px;
-      word-break: break-all;
-      font-size: 14pt;
+    div.card {
+      position: relative;
+      text-align: center;
+      color: black;
+      font-size: 20pt;
+      padding: 10px;
+    }
+    div.centered {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      white-space: pre-wrap;
     }
   </style>
 </head>
   <body>
-    <div class="text-center well" style="font-size: 20px; "><b>Room {{room_id}}</b></div>
+    <div class="text-center well" style="font-size: 20px; "><b>Game Room</b></div>
 
-      <div class="well container">
-        <div id="card_image" class="collapse">
-          <img id="image" src="" width="400" height="400">
-        </div>
-
-        <div id="card_text" class="card-text collapse">
-          <table width="100%">
-            <tbody>
-              <tr>
-                <td id="text" class="my-td"></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <button type="button" id="get_card" class="btn btn-success btn-block my-but" > New word</button>
-      </div>
+    <div class="well container">
+      <div id="field"></div>
+      <button type="button" id="new_cards" class="btn btn-success btn-block my-but" > New cards</button>
+    </div>
 
 
     <script>
       var socket = io('http://' + document.domain + ':' + location.port)
       var room_id = location.href.substr(location.href.lastIndexOf("/")+1)
+      let decks_count = 0
+      let max_cards = 3
 
       socket.on('connect', function() {
         console.log('room id is ' + room_id)
+        socket.emit('join single room', socket.id)
+        console.log('join single room')
         socket.emit('join game room', room_id)
-        socket.emit('prepare room', room_id)
+        console.log('join game room')
+        socket.emit('prepare field', {
+          'room' : room_id,
+          'client' : socket.id
+        })
+        socket.emit('prepare cards', {
+          'room' : room_id,
+          'client' : socket.id
+        })
 
-        $('#get_card').on('click', function(e) {
+        $('#new_cards').on('click', function(e) {
           e.preventDefault()
-          socket.emit('send new card', room_id)
+          socket.emit('send new cards', room_id)
         })
       })
 
-      socket.on('get new card', function(card) {
-        console.log(card)
+      socket.on('make field', function(count) {
+        //console.log(count)
+        decks_count = count
+        if (decks_count === 1) {
+          var card = document.createElement("div")
+          var image = document.createElement("img")
+          var text = document.createElement("div")
+          card.className = "card"
+          card.style = "width: " + 100 / max_cards + "%; " + "height: 300pt; left: " + 100 / max_cards + "%;"
+          card.id = "card" + 0
+          card.appendChild(image)
+          card.appendChild(text)
+          image.style = "width: 100%; height: 100%;"
+          image.src = "/static/basecard.png"
+          text.className = "centered"
 
-        if (card['image'] != '') {
-          $("#image").attr("src", card['image'])
-          $("#card_image").collapse('show')
+          document.getElementById("field").appendChild(card)
         } else {
-          $("#card_image").collapse('hide')
-        }
-        if (card['text'] != '') {
-          $('#text').text(card['text'])
-          $('#card_text').collapse('show')
+          var table = document.createElement("table")
+          var table_body = document.createElement("tbody")
+          table.appendChild(table_body)
+          for (var i = 0; i < decks_count / max_cards; i++) {
+            var row = document.createElement("tr")
+            table_body.appendChild(row)
+            for (var j = 0; j < max_cards; j++) {
+              var cell = document.createElement("td")
+              var card = document.createElement("div")
+              var image = document.createElement("img")
+              var text = document.createElement("div")
+              cell.appendChild(card)
+              //cell.width = "33%"
+              cell.width = 100 / max_cards + "%"
+              cell.height="400pt"
+              card.className = "card"
+              card.style = "height: 100%;"
+              card.id = "card" + (i * max_cards + j)
+              card.appendChild(image)
+              card.appendChild(text)
+              image.style = "width: 100%; height: 100%;"
+              image.src = "/static/basecard.png"
+              text.className = "centered"
+              //text.style = "white-space: pre-wrap;"
 
-        } else {
-          $('#card_text').collapse('hide')
+              row.appendChild(cell)
+              if (i * max_cards + j + 1 === decks_count) {
+                for (var k = j + 1; k < max_cards; k++) {
+                  var cell = document.createElement("td")
+                  cell.width = 100 / max_cards + "%"
+                  row.appendChild(cell)
+                }
+                break
+              }
+            }
+          }
+          document.getElementById("field").appendChild(table)
         }
-        //$("#card_field").css("background-image", 'url(' + card['image'] + ')')
+      })
+
+      function imageExists(url, place, callback) {
+        var img = new Image();
+        img.onload = function() { callback(true, url, place); };
+        img.onerror = function() { callback(false, url, place); };
+        img.src = url;
+      }
+
+      socket.on('get new cards', function(cards) {
+        for (var i = 0; i < decks_count; i++) {
+          var card = document.getElementById("card" + i)
+          console.log(i + " " + cards[i])
+          imageExists(cards[i], card, function(exists, url, place) {
+            if (exists) {
+              place.childNodes[0].src = url
+              place.childNodes[1].innerHTML = ""
+            } else {
+              place.childNodes[0].src = "/static/basecard.png"
+              place.childNodes[1].innerHTML = url
+            }
+          });
+
+        }
       })
 
       socket.on('disconnect', function() {
