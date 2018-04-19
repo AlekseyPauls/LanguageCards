@@ -10,10 +10,11 @@
 
   <!-- Bootstrap -->
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
-  <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.7.3/socket.io.min.js"></script>
   <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.5.13/clipboard.min.js"></script>
 
   <style type="text/css">
     div.container {
@@ -25,7 +26,6 @@
     button.my-but {
       width: 140px;
       height: 40px;
-      margin-top: 15px;
       margin-left: auto;
       margin-right: auto;
       font-size: 14pt;
@@ -48,25 +48,31 @@
 </head>
   <body>
     <div class="text-center well" style="font-size: 20px; "><b>Game Room</b></div>
-
     <div class="well container">
       <div id="field"></div>
-      <button type="button" id="new_cards" class="btn btn-success btn-block my-but" > New cards</button>
+      <div class="text-center">
+        <div class="btn-group" style="margin-top: 15px;">
+          <button type="button" id="new_cards" class="btn btn-success btn-block my-but"> New cards</button>
+          <button type="button" id="copy" class="btn btn-primary my-but">Copy join URL</button>
+          <button type="button" id="back" class="btn btn-info my-but">Back</button>
+        </div>
+      </div>
+
+
     </div>
+    <div id="hidden" hidden> </div>
 
 
     <script>
       var socket = io('http://' + document.domain + ':' + location.port)
-      var room_id = location.href.substr(location.href.lastIndexOf("/")+1)
+      var room_id = location.href.substr(location.href.lastIndexOf("/") + 1)
       let decks_count = 0
       let max_cards = 3
+      $('#joinUrl').href = location.href
 
       socket.on('connect', function() {
-        console.log('room id is ' + room_id)
         socket.emit('join single room', socket.id)
-        console.log('join single room')
         socket.emit('join game room', room_id)
-        console.log('join game room')
         socket.emit('prepare field', {
           'room' : room_id,
           'client' : socket.id
@@ -74,6 +80,19 @@
         socket.emit('prepare cards', {
           'room' : room_id,
           'client' : socket.id
+        })
+
+        $('#copy').on('click', function(e) {
+          e.preventDefault()
+          var tmp = $('<input>').val(location.href).appendTo('body').select()
+          document.execCommand('copy')
+          tmp.remove()
+        })
+
+        $('#back').on('click', function(e) {
+          e.preventDefault()
+          socket.emit('leave game room', room_id)
+          socket.emit('redirect to Start', socket.id)
         })
 
         $('#new_cards').on('click', function(e) {
@@ -141,16 +160,20 @@
       })
 
       function imageExists(url, place, callback) {
-        var img = new Image();
-        img.onload = function() { callback(true, url, place); };
-        img.onerror = function() { callback(false, url, place); };
-        img.src = url;
+        var img = new Image()
+        img.onload = function() { callback(true, url, place) }
+        img.onerror = function() { callback(false, url, place) }
+        if (/^(ftp|http|https):\/\/[^ "]+$/.test(url)) {
+          img.src = url
+        } else {
+          callback(false, url, place)
+        }
       }
 
       socket.on('get new cards', function(cards) {
         for (var i = 0; i < decks_count; i++) {
           var card = document.getElementById("card" + i)
-          console.log(i + " " + cards[i])
+          //console.log(i + " " + cards[i])
           imageExists(cards[i], card, function(exists, url, place) {
             if (exists) {
               place.childNodes[0].src = url
@@ -159,19 +182,17 @@
               place.childNodes[0].src = "/static/basecard.png"
               place.childNodes[1].innerHTML = url
             }
-          });
-
+          })
         }
       })
 
-      socket.on('disconnect', function() {
-        console.log('Got disconnect!');
-        socket.emit('leave', room_id)
+      socket.on('redirect', function(url) {
+        window.location = url
       })
 
-      window.onbeforeunload = function() {
-          socket.emit('leave', room_id)
-      }
+      $(window).on("beforeunload", function() {
+        socket.emit('leave game room', room_id)
+      })
     </script>
   </body>
 </html>

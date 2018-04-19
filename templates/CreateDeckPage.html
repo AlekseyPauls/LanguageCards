@@ -38,15 +38,12 @@
       width: 100%;
     }
     .vertical-align-center {
-      /* To center vertically */
       display: table-cell;
       vertical-align: middle;
     }
     .modal-content {
-      /* Bootstrap sets the size of the modal in the modal-dialog class, we need to inherit it */
       width:inherit;
       height:inherit;
-      /* To center horizontally */
       margin: 0 auto;
     }
   </style>
@@ -55,35 +52,32 @@
     <div class="text-center well" style="font-size: 20px; "><b>Create deck</b></div>
 
     <div class="well container">
-        <table width="100%">
-          <tbody>
-            <tr>
-              <td align="right" width="15%"><b>Name: </b></td>
-              <td><input type="text" id="name" class="form-control" style="font-size: 14pt;" placeholder="Deck name"></td>
-            </tr>
-            <tr>
-              <td align="right" valign="top"><b>Description:</b></td>
-              <td height="250"><textarea id="description" class="form-control my-ta" placeholder="Add description"></textarea></td>
-            </tr>
-            <tr>
-              <td align="right" valign="top"><b>Cards:</b></td>
-              <td height="250"><textarea id="cards" class="form-control my-ta" placeholder="Write cards. New line - new card. Use '/' to separate lines in one card"></textarea></td>
-            </tr>
-            <tr>
-              <td align="right"><b>Import: </b></td>
-              <td><input type="file" id="file" accept="text/"></td>
-            </tr>
-            <tr>
-              <td></td>
-              <td style="text-align: left;">
-                <div class="btn-group">
-                  <button type="button" id="save" class="btn btn-success my-btn"> Save</button>
-                  <button type="button" id="back" class="btn btn-primary my-btn"> Back</button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+      <table width="100%">
+        <tbody>
+          <tr>
+            <td align="right" width="15%"><b>Name: </b></td>
+            <td><input type="text" id="name" class="form-control" style="font-size: 14pt;" placeholder="Deck name"></td>
+          </tr>
+          <tr>
+            <td align="right" valign="top"><b>Description:</b></td>
+            <td height="150"><textarea id="description" class="form-control my-ta" placeholder="Add description"></textarea></td>
+          </tr>
+          <tr>
+            <td align="right" valign="top"><b>Cards:</b></td>
+            <td height="300"><textarea id="cards" class="form-control my-ta" placeholder="Write cards. New line - new card. Use '/' to separate lines in one card"></textarea></td>
+          </tr>
+          <tr>
+            <td align="right"><b>Import: </b></td>
+            <td><input type="file" id="file" accept="text/"></td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="text-center">
+        <div class="btn-group" style="padding: 30px;">
+          <button type="button" id="save" class="btn btn-success my-btn"> Save</button>
+          <button type="button" id="back" class="btn btn-primary my-btn"> Back</button>
+        </div>
+      </div>
     </div>
 
     <div id="modal" class="modal fade" role="dialog">
@@ -103,12 +97,12 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.7.3/socket.io.min.js"></script>
     <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+
     <script>
       var socket = io('http://' + document.domain + ':' + location.port)
 
       socket.on('connect', function() {
-        console.log('join CreateDeck')
-        socket.emit('join single room', socket.id)
+        //socket.emit('join single room', socket.id)
 
         $('#save').on('click', function(e) {
           e.preventDefault()
@@ -130,9 +124,7 @@
         })
         $('#back').on('click', function(e) {
           e.preventDefault()
-          socket.emit('redirect to Start', {
-            'room' : socket.id
-          })
+          socket.emit('redirect to Start', socket.id)
         })
       })
 

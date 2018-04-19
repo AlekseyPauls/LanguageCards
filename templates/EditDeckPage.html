@@ -38,69 +38,42 @@
       width: 100%;
     }
     .vertical-align-center {
-      /* To center vertically */
       display: table-cell;
       vertical-align: middle;
     }
     .modal-content {
-      /* Bootstrap sets the size of the modal in the modal-dialog class, we need to inherit it */
       width:inherit;
       height:inherit;
-      /* To center horizontally */
       margin: 0 auto;
     }
-    //b {
-    //  font-size: 14pt;
-    //}
   </style>
 </head>
   <body>
     <div class="text-center well" style="font-size: 20px; "><b>Edit deck</b></div>
-    <div class=" well container">
-      <b style="font-size: 16pt;">Info</b>
+    <div class="well container">
       <table width="100%">
         <tbody>
           <tr>
             <td align="right" width="15%"><b>Name: </b></td>
-            <td align="left"><b id="name"> </b></td>
+            <td><div id="name" style="font-size: 14pt; text-align: left"></div></td>
           </tr>
           <tr>
-            <td align="right" width="15%"><b>Description: </b></td>
-            <td align="left"><b id="description"> </b></td>
+            <td align="right" valign="top"><b>Description: </b></td>
+            <td height="150"><textarea id="description" class="form-control my-ta" readonly></textarea></td>
           </tr>
           <tr>
-            <td align="right"><b>Length:</b></td>
-            <td align="left"><b id="length"> </b></td>
+            <td align="right" valign="top"><b>Cards: </b></td>
+            <td height="300"><textarea id="cards" class="form-control my-ta"></textarea></td>
           </tr>
         </tbody>
       </table>
-      <div class="panel panel-success">
-        <div class="panel-heading">
-          <div class="panel-title" style="font-weight:bold; font-size: 14pt;">
-            <a data-toggle="collapse" href="#collapse1">Add card</a>
-          </div>
+      <div class="text-center">
+        <div class="btn-group" style="padding: 30px;">
+          <button type="button" id="save" class="btn btn-success my-btn">Save</button>
+          <button type="button" id="export" class="btn btn-primary my-btn">Export</button>
+          <button type="button" id="delete" class="btn btn-warning my-btn">Delete</button>
+          <button type="button" id="back" class="btn btn-info my-btn">Back</button>
         </div>
-        <div id="collapse1" class="panel-collapse collapse">
-          <div class="panel-body">
-            <form action="" method="post" id="cardForm">
-              <table width="100%">
-                <tbody>
-                  <tr>
-                    <td align="right" width="15%"><b>Image: </b></td>
-                    <td><input type="file" id="image" accept="image/*"></td>
-                  </tr>
-                  <tr>
-                    <td align="right"><b>Text:</b></td>
-                    <td><input type="text" id="text" class="form-control" style="font-size: 14pt;" placeholder="Text"></td>
-                  </tr>
-                </tbody>
-              </table>
-              <button type="submit" id="save_card" class="btn btn-success my-btn">Save card</button>
-            </form>
-          </div>
-        </div>
-      </div>
-        <button type="button" id="back" class="btn btn-primary my-btn">Back</button>
       </div>
     </div>
 
@@ -121,48 +94,59 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.7.3/socket.io.min.js"></script>
     <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+
     <script>
       var socket = io('http://' + document.domain + ':' + location.port)
-      var name = location.href.substr(location.href.lastIndexOf("/")+1)
+      var name = decodeURI(location.href.substr(location.href.lastIndexOf("/") + 1))
       $('#name').text(name)
+      console.log(name)
 
       socket.on('connect', function() {
-        console.log('join CreateDeck')
         socket.emit('join single room', socket.id)
+        console.log(socket.id)
         socket.emit('send deck info', {
           'room': socket.id,
           'name': name
         })
 
-        $('#cardForm').on('submit', function(e) {
+        $('#save').on('click', function(e) {
           e.preventDefault()
-          var text = $('#text').val()
-          //var image = $('#image').files(0)
-          var image = document.getElementById('image').files[0]
-          if (image == undefined) {
-            image = ''
-          console.log(image)
-          socket.emit('save card', {
-            'room' : socket.id,
-            'deck_name' : name,
-            'text' : text,
-            'image' : image
+          var cards = $('#cards').val()
+          socket.emit('change deck', {
+            'deck' : name,
+            'cards' : cards
           })
-          $('#text').val('').focus()
-          $('#image').val('').focus()
+          socket.emit('clear tmp')
+          $('#message').html('Changes was saved!')
+          $('#modal').modal('show')
         })
+
+        $('#export').on('click', function(e) {
+          e.preventDefault()
+          window.open('/decks/' + name + '.txt')
+        })
+
+        $('#delete').on('click', function(e) {
+          e.preventDefault()
+          socket.emit('delete deck', name)
+          socket.emit('clear tmp')
+          socket.emit('redirect to Start', socket.id)
+        })
+
         $('#back').on('click', function(e) {
           e.preventDefault()
-          socket.emit('redirect to Start', {
-            'room' : socket.id
-          })
+          socket.emit('clear tmp')
+          socket.emit('redirect to Start', socket.id)
         })
       })
 
       socket.on('get deck info', function(data) {
-        console.log(data)
-        $('#length').text(data.length)
         $('#description').text(data.description)
+        var cards = ''
+        for (var i = 0; i < data.cards.length; i++) {
+          cards += data.cards[i] + '\n'
+        }
+        $('#cards').text(cards)
       })
 
       socket.on('message', function(mes) {
