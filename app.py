@@ -14,18 +14,18 @@ app.config['SECRET_KEY'] = 'jsbcfsbfjefebw237u3gdbdc'
 socketio = SocketIO(app)
 
 # Test Config
-# MONGO = {
-#                 'db': 'mongo',
-#                 'host': 'localhost',
-#                 'port': '27017',
-# }
-
-#App Config
 MONGO = {
                 'db': 'mongo',
-                'host': 'db',
+                'host': 'localhost',
                 'port': '27017',
 }
+
+#App Config
+# MONGO = {
+#                 'db': 'mongo',
+#                 'host': 'db',
+#                 'port': '27017',
+# }
 
 MONGO_URI = os.environ.get('MONGO_URI', 'mongodb://%(host)s:%(port)s/%(db)s' % MONGO)
 db = connect(MONGO['db'], host=MONGO['host'])
@@ -219,6 +219,12 @@ def redirect_to_Start(room):
     socketio.emit('redirect', url_for('start'), room=room)
 
 
+@socketio.on('send languages')
+def send_languages(room):
+    lang = get_languages()
+    socketio.emit('get languages', lang, room=room)
+
+
 """ Database using """
 
 
@@ -324,13 +330,11 @@ def make_tmp_file(name):
 """ Service logic """
 
 
-
 def check_deck_name(name):
     if (re.findall(r'[ ^ A - Za - z0 - 9 - _ +:.!]+', name) is ''):
         return True
     else:
         return False
-
 
 
 def parse_cards(cards, mode):
@@ -360,6 +364,32 @@ def random_card(cards):
     r = random.randint(0, len(cards) - 1)
     return cards[r]
 
+
+def get_languages():
+    lang_dict = {}
+    path = "static/languages/"
+    files = os.listdir(path)
+    for filename in files:
+        if (filename.count("_") == 0):
+            lang_code = ""
+        else:
+            lang_code = filename[filename.find("_") + 1 : filename.find('.')]
+        with open(path + filename) as f:
+            lines = f.readlines()
+            if ((lines[0])[0] == '#' and is_properties(lines)):
+                lang_dict[lang_code] = lines[0][1 : len(lines[0]) - 1]
+            else:
+                app.logger.debug("Wrong language file " + filename)
+    return lang_dict
+
+
+def is_properties(lines):
+    for line in lines:
+        if (line[0] == "#" or line[0] == "\n"):
+            continue
+        if (line.count("=") != 1):
+            return False
+    return True
 
 
 """ Application """

@@ -7,66 +7,46 @@
 
     <title>LanguageCards</title>
 
-    <!-- Bootstrap -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
     integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdn.datatables.net/1.10.16/css/dataTables.jqueryui.min.css">
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.7.3/socket.io.min.js"></script>
+    <script src=https://cdnjs.cloudflare.com/ajax/libs/mathjs/3.3.0/math.min.js></script>
+    <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/v/dt/dt-1.10.16/datatables.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/select/1.2.5/js/dataTables.select.min.js"></script>
+    <script type="text/javascript" src="/static/js/jquery.i18n.properties.js"></script>
 
-    <style type="text/css">
-      div.container {
-        width: 40%;
-        margin-right: auto;
-        margin-left: auto;
-      }
-      button.my-btn {
-        width: 140px;
-        height: 40px;
-        font-size: 14pt;
-      }
-      div.my-header {
-        font-size: 16pt;
-        text-align: center;
-        font-weight: bold;
-        margin-top: 15px;
-        margin-bottom: 15px;
-      }
-      .vertical-alignment-helper {
-        display:table;
-        height: 100%;
-        width: 100%;
-      }
-      .vertical-align-center {
-        display: table-cell;
-        vertical-align: middle;
-      }
-      .modal-content {
-        width:inherit;
-        height:inherit;
-        margin: 0 auto;
-      }
-    </style>
   </head>
   <body>
-    <div class="text-center well" style="font-size: 20pt;"><b>LanguageCards</b></div>
-    <div class="well container">
-      <div class="my-header">All decks:</div>
-      <table id="all_decks" class="table table-striped table-bordered" style="width:100%; font-size: 14pt;">
+    <div class="dropdown language-dropdawn">
+      <button id="chooseLang" class="btn btn-primary dropdown-toggle my-btn" type="button" data-toggle="dropdown">&nbsp;
+        <span class="caret"></span></button>
+      <ul id="langList" class="dropdown-menu dropdown-menu-right"></ul>
+    </div>
+    <div class="text-center well" style="font-size: 20pt;"><b id="pageName" style="">&nbsp;</b></div>
+
+    <div class="well container1">
+      <div id="headerAllDecks" class="my-header">&nbsp;</div>
+      <table id="allDecks" class="table table-striped table-bordered" style="width:100%; font-size: 14pt;">
         <thead>
           <tr>
-              <th>Name</th>
-              <th>Length</th>
-              <th>Description</th>
+            <th id="labelName1">&nbsp;</th>
+            <th id="labelLength1">&nbsp;</th>
+            <th id="labelDescription1">&nbsp;</th>
           </tr>
         </thead>
         <tbody></tbody>
       </table>
-      <div class="my-header">Selected decks:</div>
-      <table id="selected_decks" class="table table-striped table-bordered" style="width:100%; font-size: 14pt;">
+      <div id="headerSelectedDecks" class="my-header">&nbsp;</div>
+      <table id="selectedDecks" class="table table-striped table-bordered" style="width:100%; font-size: 14pt;">
         <thead>
           <tr>
-              <th>Name</th>
-              <th>Length</th>
-              <th>Description</th>
+            <th id="labelName2">&nbsp;</th>
+            <th id="labelLength2">&nbsp;</th>
+            <th id="labelDescription2">&nbsp;</th>
           </tr>
         </thead>
         <tbody></tbody>
@@ -74,9 +54,9 @@
       <div id="selected_rows"></div>
       <div class="text-center">
         <div class="btn-group" style="padding: 30px;">
-          <button type="button" id="start" class="btn btn-success my-btn">Start</button>
-          <button type="button" id="createDeck" class="btn btn-primary my-btn">Create deck</button>
-          <button type="button" id="editDeck" class="btn btn-info my-btn">Edit deck</button>
+          <button type="button" id="start" class="btn btn-success my-btn">&nbsp;</button>
+          <button type="button" id="createDeck" class="btn btn-primary my-btn">&nbsp;</button>
+          <button type="button" id="editDeck" class="btn btn-info my-btn">&nbsp;</button>
         </div>
       </div>
     </div>
@@ -87,101 +67,40 @@
           <div class="modal-content">
             <div id="message" class="modal-body" style="text-align: center; font-size: 14pt"></div>
             <div class="modal-footer">
-              <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+              <button id="close" type="button" class="btn btn-default" data-dismiss="modal">&nbsp;</button>
             </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.7.3/socket.io.min.js"></script>
-    <script src=https://cdnjs.cloudflare.com/ajax/libs/mathjs/3.3.0/math.min.js></script>
-    <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
-    <script type="text/javascript" src="https://cdn.datatables.net/v/dt/dt-1.10.16/datatables.min.js"></script>
-    <script type="text/javascript" src="https://cdn.datatables.net/select/1.2.5/js/dataTables.select.min.js"></script>
-
     <script>
       var socket = io('http://' + document.domain + ':' + location.port)
       console.log('http://' + document.domain + ':' + location.port)
-      var t = $('#all_decks').DataTable({
+      var t = $('#allDecks').DataTable({
         "scrollY": "300px",
         "paging": false,
         "info": false
-      });
-      var t_s = $('#selected_decks').DataTable({
+      })
+      $('#allDecks_filter').attr("style", "font-size: 14pt; font-weight: normal")
+      $('#allDecks_filter').find("input").attr("style", "font-weight: normal")
+      var t_s = $('#selectedDecks').DataTable({
         "scrollY": "150px",
         "paging": false,
         "info": false,
         "searching": false
-      });
-
+      })
+      var userLang = navigator.language || navigator.userLanguage;
+      if (localStorage.getItem("userLang") != "") {
+        updateUILang(localStorage.getItem("userLang"))
+      } else {
+        updateUILang(userLang)
+      }
 
       socket.on('connect', function() {
         socket.emit('join single room', socket.id)
         socket.emit('send table', socket.id)
-
-        $('#start').on('click', function(e) {
-          e.preventDefault()
-
-          var decks = []
-          rows = t_s.rows().data()
-          if (rows.length === 0) {
-            $('#message').html('Please choose at least one deck')
-            $('#modal').modal('show')
-          } else {
-            for (var i = 0; i < rows.length; i++) {
-              decks.push(rows[i][0])
-            }
-            socket.emit('start game', {
-            'current_room' : socket.id,
-            'decks' : decks
-            })
-          }
-        })
-
-        $('#createDeck').on('click', function(e) {
-          e.preventDefault()
-          socket.emit('redirect to CreateDeck', socket.id)
-        })
-
-        $('#editDeck').on('click', function(e) {
-          e.preventDefault()
-
-          var deck
-          rows = t_s.rows().data()
-          if (rows.length !== 1) {
-            $('#message').html('Please choose only one deck')
-            $('#modal').modal('show')
-          } else {
-            deck = rows[0][0]
-            socket.emit('redirect to EditDeck', {
-            'room' : socket.id,
-            'deck' : deck
-            })
-          }
-        })
-
-        $('#all_decks tbody').on( 'click', 'tr', function () {
-          var data = t.row(this).data()
-          t.row(this).remove().draw()
-          t_s.row.add([
-            data[0],
-            data[1],
-            data[2]
-          ]).draw()
-        })
-
-        $('#selected_decks tbody').on( 'click', 'tr', function () {
-          var data = t_s.row(this).data()
-          t_s.row(this).remove().draw()
-          t.row.add([
-            data[0],
-            data[1],
-            data[2]
-          ]).draw()
-        })
+        socket.emit('send languages', socket.id)
       })
 
       socket.on('redirect', function(url) {
@@ -199,6 +118,123 @@
           ]).draw(false)
         }
       })
+
+      socket.on('get languages', function(msg) {
+        console.log(msg)
+        for (var lang in msg) {
+          var listElem = document.createElement("li")
+          var langElem = document.createElement("a")
+          langElem.innerHTML = msg[lang]
+          langElem.id = lang
+          langElem.className = "langlabel"
+          listElem.appendChild(langElem)
+          document.getElementById("langList").appendChild(listElem)
+        }
+      })
+
+      $('#start').on('click', function() {
+        var decks = []
+        rows = t_s.rows().data()
+        if (rows.length === 0) {
+          $('#message').html('Please choose at least one deck')
+          $('#modal').modal('show')
+        } else {
+          for (var i = 0; i < rows.length; i++) {
+            decks.push(rows[i][0])
+          }
+          socket.emit('start game', {
+          'current_room' : socket.id,
+          'decks' : decks
+          })
+        }
+      })
+
+      $('#createDeck').on('click', function() {
+        socket.emit('redirect to CreateDeck', socket.id)
+      })
+
+      $('#editDeck').on('click', function() {
+        var deck
+        rows = t_s.rows().data()
+        if (rows.length > 1) {
+          //$('#message').html('Please choose only one deck')
+          //$('#message').html(messageChooseOnlyOneDeck)
+          $('#message').html($.i18n.prop('message_choose_only_one_deck'))
+          $('#modal').modal('show')
+        } else if (rows.length === 0) {
+          $('#message').html('Please choose at least one deck')
+          $('#modal').modal('show')
+        } else {
+          deck = rows[0][0]
+          socket.emit('redirect to EditDeck', {
+          'room' : socket.id,
+          'deck' : deck
+          })
+        }
+      })
+
+      $('#allDecks tbody').on('click', 'tr', function () {
+        var data = t.row(this).data()
+        t.row(this).remove().draw()
+        t_s.row.add([
+          data[0],
+          data[1],
+          data[2]
+        ]).draw()
+      })
+
+      $('#selectedDecks tbody').on('click', 'tr', function () {
+        var data = t_s.row(this).data()
+        t_s.row(this).remove().draw()
+        t.row.add([
+          data[0],
+          data[1],
+          data[2]
+        ]).draw()
+      })
+
+      $('#langList').on('click', 'a', function() {
+        updateUILang(this.id)
+        console.log(this.innerHTML)
+      })
+
+      function updateUILang(lang) {
+		$.i18n.properties({
+		  async: true,
+	      name: 'UI',
+	      path: '/static/languages/',
+    	  mode: 'both',
+		  language: lang,
+		  callback: function() {
+	        $('#start').text($.i18n.prop('button_start'))
+	        $('#createDeck').text($.i18n.prop('button_create_deck'))
+	        $('#editDeck').text($.i18n.prop('button_edit_deck'))
+	        $('#close').text($.i18n.prop('button_close'))
+	        $('#pageName').text($.i18n.prop('page_name_start'))
+	        $('#headerAllDecks').text($.i18n.prop('header_all_decks'))
+	        $('#headerSelectedDecks').text($.i18n.prop('header_selected_decks'))
+            $('#labelName1').text($.i18n.prop('label_name'))
+            $('#labelLength1').text($.i18n.prop('label_length'))
+            $('#labelDescription1').text($.i18n.prop('label_description'))
+            $('#labelName2').text($.i18n.prop('label_name'))
+            $('#labelLength2').text($.i18n.prop('label_length'))
+            $('#labelDescription2').text($.i18n.prop('label_description'))
+            $('#chooseLang').text($.i18n.prop('label_choose_language'))
+
+	        var searchText = $('#allDecks_filter').find("label").html()
+	        searchText = $.i18n.prop('label_search') + searchText.substr(searchText.indexOf('<'))
+	        $('#allDecks_filter').find("label").html(searchText)
+	        $('#allDecks_filter').find("input").keyup(function () {
+              t.search(
+                $('#allDecks_filter').find("input").val()
+              ).draw()
+            })
+
+            localStorage.setItem("userLang", lang)
+	        console.log("Language set")
+	      }
+		})
+	  }
     </script>
   </body>
 </html>

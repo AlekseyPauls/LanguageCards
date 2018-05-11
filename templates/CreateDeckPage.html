@@ -7,75 +7,48 @@
 
   <title>Create deck</title>
 
-  <!-- Bootstrap -->
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
   integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+  <link rel="stylesheet" href="/static/css/styles.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.7.3/socket.io.min.js"></script>
+  <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  <script type="text/javascript" src="/static/js/jquery.i18n.properties.js"></script>
 
-  <style type="text/css">
-    div.container {
-      width: 40%; /* Ширина слоя */
-      margin-right: auto;
-      margin-left: auto;
-      text-align: center;
-    }
-    button.my-btn {
-      width: 140px;
-      height: 40px;
-      font-size: 14pt;
-    }
-    th, td {
-      padding: 10px;
-      font-size: 14pt;
-    }
-    textarea.my-ta {
-      width: 100%;
-      height: 100%;
-      font-size: 14pt;
-    }
-    .vertical-alignment-helper {
-      display:table;
-      height: 100%;
-      width: 100%;
-    }
-    .vertical-align-center {
-      display: table-cell;
-      vertical-align: middle;
-    }
-    .modal-content {
-      width:inherit;
-      height:inherit;
-      margin: 0 auto;
-    }
-  </style>
 </head>
   <body>
-    <div class="text-center well" style="font-size: 20px; "><b>Create deck</b></div>
+    <div class="dropdown language-dropdawn">
+      <button id="chooseLang" class="btn btn-primary dropdown-toggle my-btn" type="button" data-toggle="dropdown">&nbsp;
+        <span class="caret"></span></button>
+      <ul id="langList" class="dropdown-menu dropdown-menu-right"></ul>
+    </div>
+    <div class="text-center well" style="font-size: 20pt;"><b id="pageName" style="">&nbsp;</b></div>
 
-    <div class="well container">
+    <div class="well container1">
       <table width="100%">
         <tbody>
           <tr>
-            <td align="right" width="15%"><b>Name: </b></td>
-            <td><input type="text" id="name" class="form-control" style="font-size: 14pt;" placeholder="Deck name"></td>
+            <td align="right" width="15%"><b id="labelName">&nbsp;</b></td>
+            <td><input type="text" id="name" class="form-control" style="font-size: 14pt;"></td>
           </tr>
           <tr>
-            <td align="right" valign="top"><b>Description:</b></td>
-            <td height="150"><textarea id="description" class="form-control my-ta" placeholder="Add description"></textarea></td>
+            <td align="right" valign="top"><b id="labelDescription">&nbsp;</b></td>
+            <td height="150"><textarea id="description" class="form-control my-ta"></textarea></td>
           </tr>
           <tr>
-            <td align="right" valign="top"><b>Cards:</b></td>
-            <td height="300"><textarea id="cards" class="form-control my-ta" placeholder="Write cards. New line - new card. Use '/' to separate lines in one card"></textarea></td>
+            <td align="right" valign="top"><b id="labelCards">&nbsp;</b></td>
+            <td height="300"><textarea id="cards" class="form-control my-ta"></textarea></td>
           </tr>
           <tr>
-            <td align="right"><b>Import: </b></td>
+            <td align="right"><b id="fileLabel">Import: </b></td>
             <td><input type="file" id="file" accept="text/"></td>
           </tr>
         </tbody>
       </table>
       <div class="text-center">
         <div class="btn-group" style="padding: 30px;">
-          <button type="button" id="save" class="btn btn-success my-btn"> Save</button>
-          <button type="button" id="back" class="btn btn-primary my-btn"> Back</button>
+          <button type="button" id="save" class="btn btn-success my-btn">&nbsp;</button>
+          <button type="button" id="back" class="btn btn-primary my-btn">&nbsp;</button>
         </div>
       </div>
     </div>
@@ -86,46 +59,19 @@
           <div class="modal-content">
             <div id="message" class="modal-body" style="text-align: center; font-size: 14pt"></div>
             <div class="modal-footer">
-              <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+              <button id="close" type="button" class="btn btn-default" data-dismiss="modal">&nbsp;</button>
             </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.7.3/socket.io.min.js"></script>
-    <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
-
     <script>
       var socket = io('http://' + document.domain + ':' + location.port)
+      updateUILang(localStorage.getItem("userLang"))
 
       socket.on('connect', function() {
-        //socket.emit('join single room', socket.id)
-
-        $('#save').on('click', function(e) {
-          e.preventDefault()
-          var name = $('#name').val()
-          var description = $('#description').val()
-          var cards = $('#cards').val()
-          var file = document.getElementById('file').files[0]
-          socket.emit('save deck', {
-            'room' : socket.id,
-            'name' : name,
-            'description' : description,
-            'cards' : cards,
-            'file' : file
-          })
-          $('#name').val('').focus()
-          $('#description').val('').focus()
-          $('#cards').val('').focus()
-          $('#file').val('').focus()
-        })
-        $('#back').on('click', function(e) {
-          e.preventDefault()
-          socket.emit('redirect to Start', socket.id)
-        })
+        socket.emit('send languages', socket.id)
       })
 
       socket.on('message', function(mes) {
@@ -138,6 +84,73 @@
         console.log(url)
         window.location = url
       })
+
+      socket.on('get languages', function(msg) {
+        console.log(msg)
+        for (var lang in msg) {
+          var listElem = document.createElement("li")
+          var langElem = document.createElement("a")
+          langElem.innerHTML = msg[lang]
+          langElem.id = lang
+          langElem.className = "langlabel"
+          listElem.appendChild(langElem)
+          document.getElementById("langList").appendChild(listElem)
+        }
+      })
+
+      $('#save').on('click', function() {
+        var name = $('#name').val()
+        var description = $('#description').val()
+        var cards = $('#cards').val()
+        var file = document.getElementById('file').files[0]
+        socket.emit('save deck', {
+          'room' : socket.id,
+          'name' : name,
+          'description' : description,
+          'cards' : cards,
+          'file' : file
+        })
+        $('#name').val('').focus()
+        $('#description').val('').focus()
+        $('#cards').val('').focus()
+        $('#file').val('').focus()
+      })
+
+      $('#back').on('click', function() {
+        socket.emit('redirect to Start', socket.id)
+      })
+
+      $('#langList').on('click', 'a', function() {
+        updateUILang(this.id)
+        console.log(this.innerHTML)
+      })
+
+      function updateUILang(lang) {
+		$.i18n.properties({
+		  async: true,
+	      name: 'UI',
+	      path: '/static/languages/',
+    	  mode: 'both',
+		  language: lang,
+		  callback: function() {
+	        $('#save').text($.i18n.prop('button_save'))
+	        $('#back').text($.i18n.prop('button_back'))
+	        $('#close').text($.i18n.prop('button_close'))
+	        $('#pageName').text($.i18n.prop('page_name_create_deck'))
+	        $('#labelName').text($.i18n.prop('label_name') + ": ")
+	        $('#name').attr("placeholder", $.i18n.prop('input_deckname'))
+            $('#labelDescription').text($.i18n.prop('label_description') + ": ")
+            $('#description').attr("placeholder", $.i18n.prop('input_description'))
+            $('#labelCards').text($.i18n.prop('label_cards') + ": ")
+            $('#cards').attr("placeholder", $.i18n.prop('input_cards'))
+            $('#fileLabel').text($.i18n.prop('label_import') + ": ")
+            $('#chooseLang').text($.i18n.prop('label_choose_language'))
+
+            localStorage.setItem("userLang", lang)
+	        console.log("Language set")
+	      }
+		})
+	  }
     </script>
   </body>
 </html>

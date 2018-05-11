@@ -7,54 +7,30 @@
 
   <title>Room</title>
 
-
-  <!-- Bootstrap -->
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/static/css/styles.css">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.7.3/socket.io.min.js"></script>
   <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
-
   <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.5.13/clipboard.min.js"></script>
+  <script type="text/javascript" src="/static/js/jquery.i18n.properties.js"></script>
 
-  <style type="text/css">
-    div.container {
-      width: 70%; /* Ширина слоя */
-      margin-right: auto;
-      margin-left: auto;
-      text-align: center;
-    }
-    button.my-but {
-      width: 140px;
-      height: 40px;
-      margin-left: auto;
-      margin-right: auto;
-      font-size: 14pt;
-    }
-    div.card {
-      position: relative;
-      text-align: center;
-      color: black;
-      font-size: 20pt;
-      padding: 10px;
-    }
-    div.centered {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      white-space: pre-wrap;
-    }
-  </style>
 </head>
   <body>
-    <div class="text-center well" style="font-size: 20px; "><b>Game Room</b></div>
-    <div class="well container">
+    <div class="dropdown language-dropdawn">
+      <button id="chooseLang" class="btn btn-primary dropdown-toggle my-btn" type="button" data-toggle="dropdown">&nbsp;
+        <span class="caret"></span></button>
+      <ul id="langList" class="dropdown-menu dropdown-menu-right"></ul>
+    </div>
+    <div class="text-center well" style="font-size: 20pt;"><b id="pageName" style="">&nbsp;</b></div>
+
+    <div class="well container2">
       <div id="field"></div>
       <div class="text-center">
         <div class="btn-group" style="margin-top: 15px;">
-          <button type="button" id="new_cards" class="btn btn-success btn-block my-but"> New cards</button>
-          <button type="button" id="copy" class="btn btn-primary my-but">Copy join URL</button>
-          <button type="button" id="back" class="btn btn-info my-but">Back</button>
+          <button type="button" id="newCards" class="btn btn-success btn-block my-btn">&nbsp;</button>
+          <button type="button" id="copy" class="btn btn-primary my-btn">&nbsp;</button>
+          <button type="button" id="back" class="btn btn-info my-btn">&nbsp;</button>
         </div>
       </div>
 
@@ -69,10 +45,12 @@
       let decks_count = 0
       let max_cards = 3
       $('#joinUrl').href = location.href
+      updateUILang(localStorage.getItem("userLang"))
 
       socket.on('connect', function() {
         socket.emit('join single room', socket.id)
         socket.emit('join game room', room_id)
+        socket.emit('send languages', socket.id)
         socket.emit('prepare field', {
           'room' : room_id,
           'client' : socket.id
@@ -80,24 +58,6 @@
         socket.emit('prepare cards', {
           'room' : room_id,
           'client' : socket.id
-        })
-
-        $('#copy').on('click', function(e) {
-          e.preventDefault()
-          var tmp = $('<input>').val(location.href).appendTo('body').select()
-          document.execCommand('copy')
-          tmp.remove()
-        })
-
-        $('#back').on('click', function(e) {
-          e.preventDefault()
-          socket.emit('leave game room', room_id)
-          socket.emit('redirect to Start', socket.id)
-        })
-
-        $('#new_cards').on('click', function(e) {
-          e.preventDefault()
-          socket.emit('send new cards', room_id)
         })
       })
 
@@ -159,6 +119,63 @@
         }
       })
 
+      socket.on('get new cards', function(cards) {
+        for (var i = 0; i < decks_count; i++) {
+          var card = document.getElementById("card" + i)
+          //console.log(i + " " + cards[i])
+          imageExists(cards[i], card, function(exists, url, place) {
+            if (exists) {
+              place.childNodes[0].src = url
+              place.childNodes[1].innerHTML = ""
+            } else {
+              place.childNodes[0].src = "/static/images/basecard.png"
+              place.childNodes[1].innerHTML = url
+            }
+          })
+        }
+      })
+
+      socket.on('redirect', function(url) {
+        window.location = url
+      })
+
+      socket.on('get languages', function(msg) {
+        console.log(msg)
+        for (var lang in msg) {
+          var listElem = document.createElement("li")
+          var langElem = document.createElement("a")
+          langElem.innerHTML = msg[lang]
+          langElem.id = lang
+          langElem.className = "langlabel"
+          listElem.appendChild(langElem)
+          document.getElementById("langList").appendChild(listElem)
+        }
+      })
+
+      $('#copy').on('click', function() {
+        var tmp = $('<input>').val(location.href).appendTo('body').select()
+        document.execCommand('copy')
+        tmp.remove()
+      })
+
+      $('#back').on('click', function() {
+        socket.emit('leave game room', room_id)
+        socket.emit('redirect to Start', socket.id)
+      })
+
+      $('#newCards').on('click', function() {
+        socket.emit('send new cards', room_id)
+      })
+
+      $('#langList').on('click', 'a', function() {
+        updateUILang(this.id)
+        console.log(this.innerHTML)
+      })
+
+      $(window).on("beforeunload", function() {
+        socket.emit('leave game room', room_id)
+      })
+
       function imageExists(url, place, callback) {
         var img = new Image()
         img.onload = function() { callback(true, url, place) }
@@ -170,29 +187,25 @@
         }
       }
 
-      socket.on('get new cards', function(cards) {
-        for (var i = 0; i < decks_count; i++) {
-          var card = document.getElementById("card" + i)
-          //console.log(i + " " + cards[i])
-          imageExists(cards[i], card, function(exists, url, place) {
-            if (exists) {
-              place.childNodes[0].src = url
-              place.childNodes[1].innerHTML = ""
-            } else {
-              place.childNodes[0].src = "/static/basecard.png"
-              place.childNodes[1].innerHTML = url
-            }
-          })
-        }
-      })
+      function updateUILang(lang) {
+		$.i18n.properties({
+		  async: true,
+	      name: 'UI',
+	      path: '/static/languages/',
+    	  mode: 'both',
+		  language: lang,
+		  callback: function() {
+	        $('#newCards').text($.i18n.prop('button_new_cards'))
+	        $('#back').text($.i18n.prop('button_back'))
+	        $('#copy').text($.i18n.prop('button_copy_url'))
+	        $('#pageName').text($.i18n.prop('page_name_room'))
+	        $('#chooseLang').text($.i18n.prop('label_choose_language'))
 
-      socket.on('redirect', function(url) {
-        window.location = url
-      })
-
-      $(window).on("beforeunload", function() {
-        socket.emit('leave game room', room_id)
-      })
+	        localStorage.setItem("userLang", lang)
+	        console.log("Language set")
+	      }
+		})
+	  }
     </script>
   </body>
 </html>
