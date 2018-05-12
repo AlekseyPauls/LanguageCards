@@ -62,27 +62,39 @@
       })
 
       socket.on('make field', function(count) {
-        //console.log(count)
         decks_count = count
-        if (decks_count === 1) {
-          var card = document.createElement("div")
-          var image = document.createElement("img")
-          var text = document.createElement("div")
-          card.className = "card"
-          card.style = "width: " + 100 / max_cards + "%; " + "height: 300pt; left: " + 100 / max_cards + "%;"
-          card.id = "card" + 0
-          card.appendChild(image)
-          card.appendChild(text)
-          image.style = "width: 100%; height: 100%;"
-          image.src = "/static/basecard.png"
-          text.className = "centered"
-
-          document.getElementById("field").appendChild(card)
+        if (decks_count < max_cards) {
+          var table = document.createElement("table")
+          var table_body = document.createElement("tbody")
+          table.appendChild(table_body)
+          var row = document.createElement("tr")
+          table_body.appendChild(row)
+          table.style = "width: " + 100 / max_cards * decks_count + "%; margin-left: " + (100 - 100 / max_cards * decks_count) / 2 + "%;"
+          for (var j = 0; j < decks_count; j++) {
+            var cell = document.createElement("td")
+            var card = document.createElement("div")
+            var image = document.createElement("img")
+            var text = document.createElement("div")
+            cell.appendChild(card)
+            cell.width = 100 / max_cards + "%"
+            cell.height="400pt"
+            card.className = "card"
+            card.style = "height: 100%;"
+            card.id = "card" + j
+            card.appendChild(image)
+            card.appendChild(text)
+            image.style = "width: 100%; height: 100%;"
+            image.src = "/static/images/basecard.png"
+            text.className = "centered"
+            //text.style = "white-space: pre-wrap;"
+            row.appendChild(cell)
+          }
+          document.getElementById("field").appendChild(table)
         } else {
           var table = document.createElement("table")
           var table_body = document.createElement("tbody")
           table.appendChild(table_body)
-          for (var i = 0; i < decks_count / max_cards; i++) {
+          for (var i = 0; i < (decks_count - decks_count % max_cards) / max_cards; i++) {
             var row = document.createElement("tr")
             table_body.appendChild(row)
             for (var j = 0; j < max_cards; j++) {
@@ -91,7 +103,6 @@
               var image = document.createElement("img")
               var text = document.createElement("div")
               cell.appendChild(card)
-              //cell.width = "33%"
               cell.width = 100 / max_cards + "%"
               cell.height="400pt"
               card.className = "card"
@@ -100,22 +111,43 @@
               card.appendChild(image)
               card.appendChild(text)
               image.style = "width: 100%; height: 100%;"
-              image.src = "/static/basecard.png"
+              image.src = "/static/images/basecard.png"
               text.className = "centered"
               //text.style = "white-space: pre-wrap;"
-
               row.appendChild(cell)
-              if (i * max_cards + j + 1 === decks_count) {
-                for (var k = j + 1; k < max_cards; k++) {
-                  var cell = document.createElement("td")
-                  cell.width = 100 / max_cards + "%"
-                  row.appendChild(cell)
-                }
-                break
-              }
             }
           }
           document.getElementById("field").appendChild(table)
+
+          if (decks_count % max_cards !== 0) {
+            table = document.createElement("table")
+            table_body = document.createElement("tbody")
+            table.appendChild(table_body)
+            var row = document.createElement("tr")
+            table_body.appendChild(row)
+            table.style = "width: " + 100 / max_cards * (decks_count % max_cards) + "%; margin-left: " +
+              (100 - 100 / max_cards * (decks_count % max_cards)) / 2 + "%;"
+            for (var j = 0; j < decks_count % max_cards; j++) {
+              var cell = document.createElement("td")
+              var card = document.createElement("div")
+              var image = document.createElement("img")
+              var text = document.createElement("div")
+              cell.appendChild(card)
+              cell.width = 100 / max_cards + "%"
+              cell.height="400pt"
+              card.className = "card"
+              card.style = "height: 100%;"
+              card.id = "card" + (j + decks_count - decks_count % max_cards)
+              card.appendChild(image)
+              card.appendChild(text)
+              image.style = "width: 100%; height: 100%;"
+              image.src = "/static/images/basecard.png"
+              text.className = "centered"
+              //text.style = "white-space: pre-wrap;"
+              row.appendChild(cell)
+            }
+            document.getElementById("field").appendChild(table)
+          }
         }
       })
 

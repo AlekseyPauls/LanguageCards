@@ -15,16 +15,16 @@ socketio = SocketIO(app)
 
 # Test Config
 # MONGO = {
-#                 'db': 'mongo',
-#                 'host': 'localhost',
-#                 'port': '27017',
+#     'db': 'mongo',
+#     'host': 'localhost',
+#     'port': '27017',
 # }
 
 #App Config
 MONGO = {
-                'db': 'mongo',
-                'host': 'db',
-                'port': '27017',
+    'db': 'mongo',
+    'host': 'db',
+    'port': '27017',
 }
 
 MONGO_URI = os.environ.get('MONGO_URI', 'mongodb://%(host)s:%(port)s/%(db)s' % MONGO)
@@ -331,7 +331,8 @@ def make_tmp_file(name):
 
 
 def check_deck_name(name):
-    if (re.findall(r'[ ^ A - Za - z0 - 9 - _ +:.!]+', name) is ''):
+    r = re.findall(r'[\W]+', name)
+    if (len(r) == 0):
         return True
     else:
         return False
