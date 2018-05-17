@@ -40,8 +40,14 @@
             <td height="300"><textarea id="cards" class="form-control my-ta"></textarea></td>
           </tr>
           <tr>
-            <td align="right"><b id="fileLabel">Import: </b></td>
-            <td><input type="file" id="file" accept="text/"></td>
+            <td align="right"><b id="fileLabel">&nbsp;</b></td>
+            <td align="left">
+              <label class="btn btn-success my-btn">
+                <input type="file" id="file" accept="text/" style="display: none;">
+                <span id="import">&nbsp;</span>
+              </label>
+              <input type="text" id="filename" class="filename" disabled>
+            </td>
           </tr>
         </tbody>
       </table>
@@ -76,7 +82,7 @@
 
       socket.on('message', function(mes) {
         console.log(mes)
-        $('#message').html(mes)
+        $('#message').html($.i18n.prop(mes))
         $('#modal').modal('show')
       })
 
@@ -113,7 +119,7 @@
         $('#name').val('').focus()
         $('#description').val('').focus()
         $('#cards').val('').focus()
-        $('#file').val('').focus()
+        $('#filename').val('').focus()
       })
 
       $('#back').on('click', function() {
@@ -123,6 +129,11 @@
       $('#langList').on('click', 'a', function() {
         updateUILang(this.id)
         console.log(this.innerHTML)
+      })
+
+      $("#file").change(function(){
+       var filename = $(this).val().replace(/.*\\/, "")
+       $("#filename").val(filename)
       })
 
       function updateUILang(lang) {
@@ -143,7 +154,8 @@
             $('#description').attr("placeholder", $.i18n.prop('input_description'))
             $('#labelCards').text($.i18n.prop('label_cards') + ": ")
             $('#cards').attr("placeholder", $.i18n.prop('input_cards'))
-            $('#fileLabel').text($.i18n.prop('label_import') + ": ")
+            $('#fileLabel').text($.i18n.prop('label_from_file') + ": ")
+            $('#import').text($.i18n.prop('label_import'))
             $('#chooseLang').text($.i18n.prop('label_choose_language'))
 
             localStorage.setItem("userLang", lang)

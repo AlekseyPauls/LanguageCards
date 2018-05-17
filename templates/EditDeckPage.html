@@ -91,7 +91,7 @@
 
       socket.on('message', function(mes) {
         console.log(mes)
-        $('#message').html(mes)
+        $('#message').html($.i18n.prop(mes))
         $('#modal').modal('show')
       })
 

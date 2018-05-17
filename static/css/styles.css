@@ -10,7 +10,7 @@ div.container2 {
   margin-left: auto;
   text-align: center;
 }
-button.my-btn {
+.my-btn {
   width: 140px;
   height: 40px;
   font-size: 14pt;

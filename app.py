@@ -1,10 +1,8 @@
+# -*- coding: utf-8 -*-
+
 from flask import Flask, render_template, redirect, url_for, send_file, abort
 from flask_socketio import SocketIO, join_room, leave_room, rooms
-import random
-import os
-import glob
-import re
-
+import random, os, glob, re, codecs
 from mongoengine import *
 from models import Room, Deck
 
@@ -114,22 +112,21 @@ def save_deck(data):
     deck['cards'] = []
 
     if (not check_deck_name(deck['name'])):
-        socketio.emit('message', 'Bad deck name!', room=room)
+        socketio.emit('message', 'message_bad_deckname', room=room)
         return
-
     if data.get('cards') is not None:
         deck['cards'].extend(parse_cards(data['cards'], 'string'))
-
     if data.get('file') is not None:
         deck['cards'].extend(parse_cards(data['file'], 'file'))
-
     deck['length'] = len(deck['cards'])
-
+    if deck['length'] == 0:
+        socketio.emit('message', 'message_empty_deck', room=room)
+        return
     res = save_deck_to_db(deck)
     if res:
-        socketio.emit('message', 'Deck was saved!', room=room)
+        socketio.emit('message', 'message_deck_saved', room=room)
     else:
-        socketio.emit('message', 'Can`t save deck: name is already using', room=room)
+        socketio.emit('message', 'message_deckname_is_using', room=room)
 
 
 
@@ -331,8 +328,10 @@ def make_tmp_file(name):
 
 
 def check_deck_name(name):
+    if len(name) == 0:
+        return False
     r = re.findall(r'[\W]+', name)
-    if (len(r) == 0):
+    if len(r) == 0:
         return True
     else:
         return False
@@ -366,6 +365,8 @@ def random_card(cards):
     return cards[r]
 
 
+import codecs
+
 def get_languages():
     lang_dict = {}
     path = "static/languages/"
@@ -375,7 +376,7 @@ def get_languages():
             lang_code = ""
         else:
             lang_code = filename[filename.find("_") + 1 : filename.find('.')]
-        with open(path + filename) as f:
+        with codecs.open(path + filename, 'r', 'utf-8') as f:
             lines = f.readlines()
             if ((lines[0])[0] == '#' and is_properties(lines)):
                 lang_dict[lang_code] = lines[0][1 : len(lines[0]) - 1]

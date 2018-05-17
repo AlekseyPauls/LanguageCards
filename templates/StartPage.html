@@ -157,12 +157,10 @@
         var deck
         rows = t_s.rows().data()
         if (rows.length > 1) {
-          //$('#message').html('Please choose only one deck')
-          //$('#message').html(messageChooseOnlyOneDeck)
           $('#message').html($.i18n.prop('message_choose_only_one_deck'))
           $('#modal').modal('show')
         } else if (rows.length === 0) {
-          $('#message').html('Please choose at least one deck')
+          $('#message').html($.i18n.prop(message_choose_at_least_one_deck))
           $('#modal').modal('show')
         } else {
           deck = rows[0][0]
@@ -181,6 +179,7 @@
           data[1],
           data[2]
         ]).draw()
+        updateEmptyRows()
       })
 
       $('#selectedDecks tbody').on('click', 'tr', function () {
@@ -191,6 +190,7 @@
           data[1],
           data[2]
         ]).draw()
+        updateEmptyRows()
       })
 
       $('#langList').on('click', 'a', function() {
@@ -221,6 +221,8 @@
             $('#labelDescription2').text($.i18n.prop('label_description'))
             $('#chooseLang').text($.i18n.prop('label_choose_language'))
 
+            updateEmptyRows()
+
 	        var searchText = $('#allDecks_filter').find("label").html()
 	        searchText = $.i18n.prop('label_search') + searchText.substr(searchText.indexOf('<'))
 	        $('#allDecks_filter').find("label").html(searchText)
@@ -234,6 +236,14 @@
 	        console.log("Language set")
 	      }
 		})
+	  }
+
+	  function updateEmptyRows() {
+        var emptyRows = $('.dataTables_empty')
+        for (var i = 0; i < emptyRows.length; i++) {
+          console.log(emptyRows[i])
+          emptyRows.html($.i18n.prop('label_no_decks'))
+        }
 	  }
     </script>
   </body>
