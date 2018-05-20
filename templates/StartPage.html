@@ -22,15 +22,14 @@
   </head>
   <body>
     <div class="dropdown language-dropdawn">
-      <button id="chooseLang" class="btn btn-primary dropdown-toggle my-btn" type="button" data-toggle="dropdown">&nbsp;
-        <span class="caret"></span></button>
+      <button id="chooseLang" class="btn btn-primary dropdown-toggle my-btn" type="button" data-toggle="dropdown">&nbsp;</button>
       <ul id="langList" class="dropdown-menu dropdown-menu-right"></ul>
     </div>
-    <div class="text-center well" style="font-size: 20pt;"><b id="pageName" style="">&nbsp;</b></div>
+    <div class="text-center well" style="font-size: 26px;"><b id="pageName" style="">&nbsp;</b></div>
 
     <div class="well container1">
       <div id="headerAllDecks" class="my-header">&nbsp;</div>
-      <table id="allDecks" class="table table-striped table-bordered" style="width:100%; font-size: 14pt;">
+      <table id="allDecks" class="table table-striped table-bordered" style="width:100%; font-size: 18px;">
         <thead>
           <tr>
             <th id="labelName1">&nbsp;</th>
@@ -65,7 +64,7 @@
       <div class="vertical-alignment-helper">
         <div class="modal-dialog vertical-align-center">
           <div class="modal-content">
-            <div id="message" class="modal-body" style="text-align: center; font-size: 14pt"></div>
+            <div id="message" class="modal-body" style="text-align: center; font-size: 18px"></div>
             <div class="modal-footer">
               <button id="close" type="button" class="btn btn-default" data-dismiss="modal">&nbsp;</button>
             </div>
@@ -73,6 +72,14 @@
         </div>
       </div>
     </div>
+
+    <!-- Settings button
+    <div class="dropdown view-dropdawn">-->
+      <!--<button id="chooseLang1" class="btn btn-info dropdown-toggle my-btn" type="button" data-toggle="dropdown">&nbsp;</button>-->
+      <!--<ul id="langList1" class="dropdown-menu dropdown-menu-right">-->
+        <!--<li><div>Input</div></li>-->
+      <!--</ul>-->
+    <!--</div>-->
 
     <script>
       var socket = io('http://' + document.domain + ':' + location.port)
@@ -82,7 +89,7 @@
         "paging": false,
         "info": false
       })
-      $('#allDecks_filter').attr("style", "font-size: 14pt; font-weight: normal")
+      $('#allDecks_filter').attr("style", "font-size: 18px; font-weight: normal")
       $('#allDecks_filter').find("input").attr("style", "font-weight: normal")
       var t_s = $('#selectedDecks').DataTable({
         "scrollY": "150px",
@@ -172,6 +179,9 @@
       })
 
       $('#allDecks tbody').on('click', 'tr', function () {
+        if (this.childNodes[0].className === "dataTables_empty") {
+          return
+        }
         var data = t.row(this).data()
         t.row(this).remove().draw()
         t_s.row.add([
@@ -183,6 +193,9 @@
       })
 
       $('#selectedDecks tbody').on('click', 'tr', function () {
+        if (this.childNodes[0].className === "dataTables_empty") {
+          return
+        }
         var data = t_s.row(this).data()
         t_s.row(this).remove().draw()
         t.row.add([
@@ -211,8 +224,8 @@
 	        $('#editDeck').text($.i18n.prop('button_edit_deck'))
 	        $('#close').text($.i18n.prop('button_close'))
 	        $('#pageName').text($.i18n.prop('page_name_start'))
-	        $('#headerAllDecks').text($.i18n.prop('header_all_decks'))
-	        $('#headerSelectedDecks').text($.i18n.prop('header_selected_decks'))
+	        $('#headerAllDecks').text($.i18n.prop('header_all_decks') + ":")
+	        $('#headerSelectedDecks').text($.i18n.prop('header_selected_decks') + ":")
             $('#labelName1').text($.i18n.prop('label_name'))
             $('#labelLength1').text($.i18n.prop('label_length'))
             $('#labelDescription1').text($.i18n.prop('label_description'))
@@ -239,11 +252,7 @@
 	  }
 
 	  function updateEmptyRows() {
-        var emptyRows = $('.dataTables_empty')
-        for (var i = 0; i < emptyRows.length; i++) {
-          console.log(emptyRows[i])
-          emptyRows.html($.i18n.prop('label_no_decks'))
-        }
+        $('.dataTables_empty').html($.i18n.prop('label_no_decks'))
 	  }
     </script>
   </body>

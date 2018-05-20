@@ -18,18 +18,17 @@
 </head>
   <body>
     <div class="dropdown language-dropdawn">
-      <button id="chooseLang" class="btn btn-primary dropdown-toggle my-btn" type="button" data-toggle="dropdown">&nbsp;
-        <span class="caret"></span></button>
+      <button id="chooseLang" class="btn btn-primary dropdown-toggle my-btn" type="button" data-toggle="dropdown">&nbsp;</button>
       <ul id="langList" class="dropdown-menu dropdown-menu-right"></ul>
     </div>
-    <div class="text-center well" style="font-size: 20pt;"><b id="pageName" style="">&nbsp;</b></div>
+    <div class="text-center well" style="font-size: 26px;"><b id="pageName" style="">&nbsp;</b></div>
 
     <div class="well container1">
       <table width="100%">
         <tbody>
           <tr>
             <td align="right" width="15%"><b id="labelName">&nbsp;</b></td>
-            <td><input type="text" id="name" class="form-control" style="font-size: 14pt;"></td>
+            <td><input type="text" id="name" class="form-control" style="font-size: 20px;"></td>
           </tr>
           <tr>
             <td align="right" valign="top"><b id="labelDescription">&nbsp;</b></td>
@@ -63,7 +62,7 @@
       <div class="vertical-alignment-helper">
         <div class="modal-dialog vertical-align-center">
           <div class="modal-content">
-            <div id="message" class="modal-body" style="text-align: center; font-size: 14pt"></div>
+            <div id="message" class="modal-body" style="text-align: center; font-size: 20px"></div>
             <div class="modal-footer">
               <button id="close" type="button" class="btn btn-default" data-dismiss="modal">&nbsp;</button>
             </div>
@@ -84,6 +83,12 @@
         console.log(mes)
         $('#message').html($.i18n.prop(mes))
         $('#modal').modal('show')
+        if (mes == 'message_deck_saved') {
+          $('#name').val('').focus()
+          $('#description').val('').focus()
+          $('#cards').val('').focus()
+          $('#filename').val('').focus()
+        }
       })
 
       socket.on('redirect', function(url) {
@@ -108,18 +113,20 @@
         var name = $('#name').val()
         var description = $('#description').val()
         var cards = $('#cards').val()
+        console.log(cards)
         var file = document.getElementById('file').files[0]
-        socket.emit('save deck', {
-          'room' : socket.id,
-          'name' : name,
-          'description' : description,
-          'cards' : cards,
-          'file' : file
-        })
-        $('#name').val('').focus()
-        $('#description').val('').focus()
-        $('#cards').val('').focus()
-        $('#filename').val('').focus()
+        if (name === "") {
+          $('#message').html($.i18n.prop('message_empty_name'))
+          $('#modal').modal('show')
+        } else {
+          socket.emit('save deck', {
+            'room' : socket.id,
+            'name' : name,
+            'description' : description,
+            'cards' : cards,
+            'file' : file
+          })
+        }
       })
 
       $('#back').on('click', function() {

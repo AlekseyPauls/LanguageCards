@@ -2,7 +2,7 @@
 
 from flask import Flask, render_template, redirect, url_for, send_file, abort
 from flask_socketio import SocketIO, join_room, leave_room, rooms
-import random, os, glob, re, codecs
+import random, os, glob, re, codecs, configparser, codecs
 from mongoengine import *
 from models import Room, Deck
 
@@ -137,7 +137,6 @@ def save_deck(data):
 def send_deck_info(data):
     room = data['room']
     name = data['name']
-    print(name)
     deck = Deck.objects(Q(name=name)).first()
     socketio.emit('get deck info', {'description': deck.description, 'cards': deck.cards}, room=room)
 
@@ -178,6 +177,27 @@ def join_game_room(room):
 def leave_game_room(room):
     leave_room(room)
     decrease_clients(room)
+
+@socketio.on('send room settings')
+def send_room_settings(room):
+    try:
+        config = configparser.RawConfigParser()
+        config.read('settings.properties')
+        sett = {'minCardsInRow': config['room']['minCardsInRow'],
+                'defaultCardsInRow': config['room']['defaultCardsInRow'],
+                'maxCardsInRow': config['room']['maxCardsInRow'],
+                'stepCardsInRow': config['room']['stepCardsInRow'],
+                'minCardHeight': config['room']['minCardHeight'],
+                'defaultCardHeight': config['room']['defaultCardHeight'],
+                'maxCardHeight': config['room']['maxCardHeight'],
+                'stepCardHeight': config['room']['stepCardHeight'],
+                'minCardFontSize': config['room']['minCardFontSize'],
+                'defaultCardFontSize': config['room']['defaultCardFontSize'],
+                'maxCardFontSize': config['room']['maxCardFontSize'],
+                'stepCardFontSize': config['room']['stepCardFontSize']}
+        socketio.emit('get room settings', sett, room=room)
+    except Exception:
+        app.logger.error('Error in config file')
 
 
 @socketio.on('prepare field')
@@ -339,6 +359,8 @@ def check_deck_name(name):
 
 def parse_cards(cards, mode):
     ret = []
+    # Magic for right decoding of special symbols
+    cards = cards.encode('latin-1').decode('utf-8')
     if mode == 'file':
         tmp = cards.decode('utf-8').split('\n')
     else :
@@ -352,11 +374,10 @@ def parse_cards(cards, mode):
         else:
             if str != "":
                 str = str + line
-                ret.append(str)
+                ret.append(str.encode('latin-1').decode('utf-8'))
                 str = ""
             else:
                 ret.append(line)
-
     return ret
 
 
@@ -364,8 +385,6 @@ def random_card(cards):
     r = random.randint(0, len(cards) - 1)
     return cards[r]
 
-
-import codecs
 
 def get_languages():
     lang_dict = {}
