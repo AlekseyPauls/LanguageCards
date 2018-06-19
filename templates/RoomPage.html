@@ -22,21 +22,22 @@
       <ul id="langList" class="dropdown-menu dropdown-menu-right">
         <li><a id="labelLanguage" class="headerlabel">&nbsp;</a></li>
         <li><a id="labelView" class="headerlabel">&nbsp;</a></li>
+        <li class="divider"></li>
+        <li><a id="copy" class="headerlabel">&nbsp;</a></li>
+        <li class="divider"></li>
+        <li><a id="back" class="headerlabel">&nbsp;</a></li>
       </ul>
     </div>
     <div class="text-center well" style="font-size: 26px;"><b id="pageName">&nbsp;</b></div>
 
-    <div class="well container2">
+    <div id="container" class="well container2">
       <div id="field"></div>
       <div class="text-center">
         <div class="btn-group" style="margin-top: 15px;">
-          <button type="button" id="newCards" class="btn btn-success btn-block my-btn">&nbsp;</button>
-          <button type="button" id="copy" class="btn btn-primary my-btn">&nbsp;</button>
-          <button type="button" id="back" class="btn btn-info my-btn">&nbsp;</button>
+          <button type="button" id="newCards" class="btn btn-success btn-block new-cards-btn">&nbsp;</button>
         </div>
       </div>
     </div>
-    <div id="hidden" hidden></div>
 
     <div id="modalCard" class="modal fade container2" role="dialog">
       <div class="vertical-alignment-helper">
@@ -57,10 +58,10 @@
             <table width="100%">
               <tbody>
                 <tr>
-                  <td align="right" width="25%"><b id="labelCardsInRow">&nbsp;</b></td>
-                  <td><input type="range" min="1" max="5" class="form-control" id="inputCardsInRow"
-                    onchange="document.getElementById('cardsInRow').innerHTML = this.value;"></td>
-                  <td align="left" width="10%"><b id="cardsInRow">3</b></td>
+                  <td align="right" width="25%"><b id="labelCardWidth">&nbsp;</b></td>
+                  <td><input type="range" min="200" max="600" step="50" class="form-control" id="inputCardWidth"
+                    onchange="document.getElementById('cardWidth').innerHTML = this.value;"></td>
+                  <td align="left" width="10%"><b id="cardWidth">400</b></td>
                 </tr>
                 <tr>
                   <td align="right" valign="top"><b id="labelCardHeight">&nbsp;</b></td>
@@ -90,17 +91,36 @@
       var decks_count = 0
       var socket = io('http://' + document.domain + ':' + location.port)
       var room_id = location.href.substr(location.href.lastIndexOf("/") + 1)
+      var socket_id
       $('#joinUrl').href = location.href
       updateUILang(localStorage.getItem("userLang"))
 
       socket.on('connect', function() {
-        socket.emit('join single room', socket.id)
-        socket.emit('join game room', room_id)
+        socket_id = socket.id
+
+        socket.emit('join game room', {
+          'room' : room_id,
+          'client' : socket.id
+        })
+        closePreviousSocket()
+        socket.emit('send view change settings', {
+          'room' : room_id,
+          'client' : socket.id
+        })
+        setSettings()
         socket.emit('send languages', socket.id)
-        if (localStorage.getItem("cardsInRow") === "") {
-          socket.emit('send room settings', socket.id)
-        }
-        prepareSettings()
+      })
+
+      socket.on('get room settings', function(mes) {
+        console.log('Receive settings')
+        console.log(mes)
+        localStorage.setItem("settings" + JSON.stringify(room_id), JSON.stringify(mes))
+        $('#cardWidth').text(mes['cardWidth'])
+        $('#cardHeight').text(mes['cardHeight'])
+        $('#cardFontSize').text(mes['cardFontSize'])
+        $('#inputCardWidth').val(mes['cardWidth'])
+        $('#inputCardHeight').val(mes['cardHeight'])
+        $('#inputCardFontSize').val(mes['cardFontSize'])
         socket.emit('prepare field', {
           'room' : room_id,
           'client' : socket.id
@@ -111,52 +131,47 @@
         })
       })
 
-      socket.on('get room settings', function(mes) {
-        localStorage.setItem("cardsInRow", mes['defaultCardsInRow'])
-        localStorage.setItem("cardHeight", mes['defaultCardHeight'])
-        localStorage.setItem("cardFontSize", mes['defaultCardFontSize'])
-        localStorage.setItem("minCardsInRow", mes['minCardsInRow'])
-        localStorage.setItem("minCardHeight", mes['minCardHeight'])
-        localStorage.setItem("minCardFontSize", mes['minCardFontSize'])
-        localStorage.setItem("maxCardsInRow", mes['maxCardsInRow'])
-        localStorage.setItem("maxCardHeight", mes['maxCardHeight'])
-        localStorage.setItem("maxCardFontSize", mes['maxCardFontSize'])
-        localStorage.setItem("stepCardsInRow", mes['stepCardsInRow'])
-        localStorage.setItem("stepCardHeight", mes['stepCardHeight'])
-        localStorage.setItem("stepCardFontSize", mes['stepCardFontSize'])
-        $('#cardsInRow').text(mes['defaultCardsInRow'])
-        $('#cardHeight').text(mes['defaultCardHeight'])
-        $('#cardFontSize').text(mes['defaultCardFontSize'])
-        $('#inputCardsInRow').attr("min", mes['minCardsInRow'])
-        $('#inputCardHeight').attr("min", mes['minCardHeight'])
-        $('#inputCardFontSize').attr("min", mes['minCardFontSize'])
-        $('#inputCardsInRow').attr("max", mes['maxCardsInRow'])
-        $('#inputCardHeight').attr("max", mes['maxCardHeight'])
-        $('#inputCardFontSize').attr("max", mes['maxCardFontSize'])
-        $('#inputCardsInRow').attr("step", mes['stepCardsInRow'])
-        $('#inputCardHeight').attr("step", mes['stepCardHeight'])
-        $('#inputCardFontSize').attr("step", mes['stepCardFontSize'])
-        $('#inputCardsInRow').val(mes['defaultCardsInRow'])
-        $('#inputCardHeight').val(mes['defaultCardHeight'])
-        $('#inputCardFontSize').val(mes['defaultCardFontSize'])
+      socket.on('get view change settings', function(mes) {
+        console.log('Receive view change settings')
+        $('#inputCardWidth').attr("min", mes["minCardWidth"])
+        $('#inputCardHeight').attr("min", mes["minCardHeight"])
+        $('#inputCardFontSize').attr("min", mes["minCardFontSize"])
+        $('#inputCardWidth').attr("max", mes["maxCardWidth"])
+        $('#inputCardHeight').attr("max", mes["maxCardHeight"])
+        $('#inputCardFontSize').attr("max", mes["maxCardFontSize"])
+        $('#inputCardWidth').attr("step", mes["stepCardWidth"])
+        $('#inputCardHeight').attr("step", mes["stepCardHeight"])
+        $('#inputCardFontSize').attr("step", mes["stepCardFontSize"])
       })
 
       socket.on('make field', function(count) {
+        clearField()
+        settings = JSON.parse(localStorage.getItem("settings" + JSON.stringify(room_id)))
+        console.log(settings)
         decks_count = count
-        cards_in_row = localStorage.getItem("cardsInRow")
+        var card_width = settings["cardWidth"]
+        var cards_in_row
+        field = document.getElementById("field")
         var table = document.createElement("table")
         var table_body = document.createElement("tbody")
         table.appendChild(table_body)
+        cards_in_row = Math.floor(field.clientWidth / card_width)
+        if (cards_in_row === 0) {
+          cards_in_row = 1
+          card_width = field.clientWidth
+        }
         if (decks_count < cards_in_row) {
           var row = document.createElement("tr")
           table_body.appendChild(row)
-          table.style = "width: " + 100 / cards_in_row * decks_count + "%; margin-left: " + (100 - 100 / cards_in_row * decks_count) / 2 + "%;"
+          table.style = "width: " + card_width / field.clientWidth * 100 * decks_count + "%; margin-left: " +
+            (100 - card_width / field.clientWidth * 100 * decks_count) / 2 + "%;"
           for (var j = 0; j < decks_count; j++) {
             row.appendChild(makeCard(j))
           }
-          document.getElementById("field").appendChild(table)
+          field.appendChild(table)
         } else {
-          table.style = "width: 100%;"
+          table.style = "width: " + card_width / field.clientWidth * 100 * cards_in_row + "%; margin-left: " +
+            (100 - card_width / field.clientWidth * 100 * cards_in_row) / 2 + "%;"
           for (var i = 0; i < (decks_count - decks_count % cards_in_row) / cards_in_row; i++) {
             var row = document.createElement("tr")
             table_body.appendChild(row)
@@ -164,35 +179,44 @@
               row.appendChild(makeCard(i * cards_in_row + j))
             }
           }
-          document.getElementById("field").appendChild(table)
+          field.appendChild(table)
 
           if (decks_count % cards_in_row !== 0) {
             var table = document.createElement("table")
             var table_body = document.createElement("tbody")
             table.appendChild(table_body)
-            table.style = "width: " + 100 / cards_in_row * (decks_count % cards_in_row) + "%; margin-left: " +
-              (100 - 100 / cards_in_row * (decks_count % cards_in_row)) / 2 + "%;"
+            table.style = "width: " + card_width / field.clientWidth * 100 * (decks_count % cards_in_row) + "%; margin-left: " +
+              (100 - card_width / field.clientWidth * 100 * (decks_count % cards_in_row)) / 2 + "%;"
             var row = document.createElement("tr")
             table_body.appendChild(row)
             for (var j = 0; j < decks_count % cards_in_row; j++) {
               row.appendChild(makeCard(j + decks_count - decks_count % cards_in_row))
             }
-            document.getElementById("field").appendChild(table)
+            field.appendChild(table)
           }
         }
+        console.log("table created")
       })
 
       socket.on('get new cards', function(cards) {
+        settings = JSON.parse(localStorage.getItem("settings" + JSON.stringify(room_id)))
+        var card_height = settings['cardHeight']
+        if (card_height > $(document).height() / 2) {
+          card_height = $(document).height() / 2
+        }
         for (var i = 0; i < decks_count; i++) {
           var card = document.getElementById("card" + i)
+          if (card === null) {
+            break;
+          }
           imageExists(cards[i], card, function(exists, url, place) {
             if (exists) {
               place.childNodes[0].src = url
-              place.childNodes[0].style = "max-width: 100%; max-height: 100%;"
+              place.childNodes[0].style = "max-width: 100%; max-height: " + card_height + "px;"
               place.childNodes[1].innerHTML = ""
             } else {
               place.childNodes[0].src = "/static/images/basecard.png"
-              place.childNodes[0].style = "width: 100%; height: 100%;"
+              place.childNodes[0].style = "width: 100%; height: " + card_height + "px;"
               place.childNodes[1].innerHTML = url
             }
           })
@@ -235,7 +259,11 @@
       })
 
       $('#back').on('click', function() {
-        socket.emit('leave game room', room_id)
+        socket.emit('leave game room', {
+          'room' : room_id,
+          'client' : socket.id,
+          'old' : false
+        })
         socket.emit('redirect to Start', socket.id)
       })
 
@@ -244,32 +272,19 @@
       })
 
       $('#accept').on('click', function() {
-        localStorage.setItem("cardsInRow", $('#cardsInRow').text())
-        localStorage.setItem("cardHeight", $('#cardHeight').text())
-        localStorage.setItem("cardFontSize", $('#cardFontSize').text())
-        clearField()
-        socket.emit('prepare field', {
-          'room' : room_id,
-          'client' : socket.id
-        })
-        socket.emit('prepare cards', {
-          'room' : room_id,
-          'client' : socket.id
-        })
+        settings = JSON.parse(localStorage.getItem("settings" + JSON.stringify(room_id)))
+        settings["cardWidth"] = $('#cardWidth').text()
+        settings["cardHeight"] = $('#cardHeight').text()
+        settings["cardFontSize"] = $('#cardFontSize').text()
+        localStorage.setItem("settings" + JSON.stringify(room_id), JSON.stringify(settings))
+        setSettings()
       })
 
       $('#default').on('click', function() {
-        socket.emit('send room settings', socket.id)
-        clearField()
-        socket.emit('prepare field', {
+        socket.emit('send settings', {
           'room' : room_id,
           'client' : socket.id
         })
-        socket.emit('prepare cards', {
-          'room' : room_id,
-          'client' : socket.id
-        })
-        $('#modalSettings').modal('hide')
       })
 
       $('#cancel').on('click', function() {
@@ -290,15 +305,32 @@
       })
 
       $('#field').on('click', 'div', function() {
+        if (this.parent().class === "card") {
+          console.log("ok")
+        }
         document.getElementById("modalImage").src = this.childNodes[0].src
         document.getElementById("modalText").innerHTML = this.childNodes[1].innerHTML
         $('#modalContent').height(window.innerHeight * 0.7 + "px")
         $('#modalCard').modal('show')
       })
 
-      $(window).on("beforeunload", function() {
-        socket.emit('leave game room', room_id)
+      socket.on('disconnect', function() {
+        socket.disconnect()
+        localStorage.setItem("previousSockets" + JSON.stringify(room_id), socket_id)
       })
+
+      window.onresize = function(event) {
+        console.log("resize")
+        setSettings()
+      };
+
+      function closePreviousSocket() {
+        socket.emit('leave game room', {
+          'room' : room_id,
+          'client' : localStorage.getItem("previousSocket" + JSON.stringify(room_id)),
+          'old' : true
+        })
+      }
 
       function imageExists(url, place, callback) {
         var img = new Image()
@@ -312,39 +344,54 @@
       }
 
       function makeCard(id) {
+        settings = JSON.parse(localStorage.getItem("settings" + JSON.stringify(room_id)))
         var cell = document.createElement("td")
         var card = document.createElement("div")
         var image = document.createElement("img")
         var text = document.createElement("div")
+
         cell.appendChild(card)
-        cell.width = 100 / cards_in_row + "%"
-        cell.height = localStorage.getItem("cardHeight") + "px"
+        cell.width = settings["cardWidth"] + "px"
         card.className = "card"
-        card.style = "height: 100%;"
         card.id = "card" + id
         card.appendChild(image)
         card.appendChild(text)
         text.className = "centered"
-        text.style = "font-size: " + localStorage.getItem("cardFontSize") + "px;"
+        text.style = "font-size: " + settings["cardFontSize"] + "px;"
         return cell
       }
 
+      function setSettings() {
+        if (localStorage.getItem("settings" + JSON.stringify(room_id)) === null) {
+          console.log('No settings')
+          socket.emit('send settings', {
+            'room' : room_id,
+            'client' : socket.id
+          })
+        } else {
+          console.log('Settings already set')
+          prepareSettings()
+          socket.emit('prepare field', {
+            'room' : room_id,
+            'client' : socket.id
+          })
+          socket.emit('prepare cards', {
+            'room' : room_id,
+            'client' : socket.id
+          })
+        }
+      }
+
       function prepareSettings() {
-        $('#inputCardsInRow').attr("min", localStorage.getItem("minCardsInRow"))
-        $('#inputCardHeight').attr("min", localStorage.getItem("minCardHeight"))
-        $('#inputCardFontSize').attr("min", localStorage.getItem("minCardFontSize"))
-        $('#inputCardsInRow').attr("max", localStorage.getItem("maxCardsInRow"))
-        $('#inputCardHeight').attr("max", localStorage.getItem("maxCardHeight"))
-        $('#inputCardFontSize').attr("max", localStorage.getItem("maxCardFontSize"))
-        $('#inputCardsInRow').attr("step", localStorage.getItem("stepCardsInRow"))
-        $('#inputCardHeight').attr("step", localStorage.getItem("stepCardHeight"))
-        $('#inputCardFontSize').attr("step", localStorage.getItem("stepCardFontSize"))
-        $('#inputCardsInRow').val(localStorage.getItem("cardsInRow"))
-        $('#inputCardHeight').val(localStorage.getItem("cardHeight"))
-        $('#inputCardFontSize').val(localStorage.getItem("cardFontSize"))
-        $('#cardsInRow').text(localStorage.getItem("cardsInRow"))
-        $('#cardHeight').text(localStorage.getItem("cardHeight"))
-        $('#cardFontSize').text(localStorage.getItem("cardFontSize"))
+        settings = JSON.parse(localStorage.getItem("settings" + JSON.stringify(room_id)))
+        console.log(settings)
+
+        $('#inputCardWidth').val(settings["cardWidth"])
+        $('#inputCardHeight').val(settings["cardHeight"])
+        $('#inputCardFontSize').val(settings["cardFontSize"])
+        $('#cardWidth').text(settings["cardWidth"])
+        $('#cardHeight').text(settings["cardHeight"])
+        $('#cardFontSize').text(settings["cardFontSize"])
       }
 
       function clearField() {
@@ -371,7 +418,7 @@
             $('#cancel').text($.i18n.prop('button_cancel'))
             $('#pageName').text($.i18n.prop('page_name_room'))
             $('#settings').text($.i18n.prop('label_settings'))
-            $('#labelCardsInRow').text($.i18n.prop('label_cards_in_row'))
+            $('#labelCardWidth').text($.i18n.prop('label_cards_in_row'))
             $('#labelCardHeight').text($.i18n.prop('label_card_height'))
             $('#labelCardFontSize').text($.i18n.prop('label_card_font_size'))
             $('#labelLanguage').text($.i18n.prop('label_language') + ":")

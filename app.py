@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 
-from flask import Flask, render_template, redirect, url_for, send_file, abort
+from flask import Flask, render_template, redirect, url_for, send_file, abort, request
 from flask_socketio import SocketIO, join_room, leave_room, rooms
-import random, os, glob, re, codecs, configparser, codecs
+import random, os, glob, re, configparser, codecs, datetime
 from mongoengine import *
 from models import Room, Deck
+from threading import Thread
+import time
 
 
 app = Flask(__name__)
@@ -12,18 +14,18 @@ app.config['SECRET_KEY'] = 'jsbcfsbfjefebw237u3gdbdc'
 socketio = SocketIO(app)
 
 # Test Config
-# MONGO = {
-#     'db': 'mongo',
-#     'host': 'localhost',
-#     'port': '27017',
-# }
-
-#App Config
 MONGO = {
     'db': 'mongo',
-    'host': 'db',
+    'host': 'localhost',
     'port': '27017',
 }
+
+#App Config
+# MONGO = {
+#     'db': 'mongo',
+#     'host': 'db',
+#     'port': '27017',
+# }
 
 MONGO_URI = os.environ.get('MONGO_URI', 'mongodb://%(host)s:%(port)s/%(db)s' % MONGO)
 db = connect(MONGO['db'], host=MONGO['host'])
@@ -48,6 +50,14 @@ def room(room_id):
 @app.route('/create_deck')
 def create_deck():
     return render_template('./CreateDeckPage.html')
+
+
+@app.route('/create_room/<room_id>')
+def create_room(room_id):
+    if room_exists(room_id):
+        return render_template('./CreateRoomPage.html', room_id=room_id)
+    else:
+        abort(404)
 
 
 @app.route('/edit_deck/<name>')
@@ -75,18 +85,15 @@ def send_table(room):
     socketio.emit('make table', deck_list, room=room)
 
 
-# Add room_life_time check to delete useless rooms before create new
-@socketio.on('start game')
-def start_game(data):
+@socketio.on('create room')
+def start_room(data):
     room = data['current_room']
     new_room = {}
     new_room['id'] = generate_room_id()
     new_room['decks'] = data['decks']
-    new_room['clients'] = 0
     add_room(new_room)
-    get_random_cards(new_room['id'])
     app.logger.debug('Created game room with id: ' + str(new_room['id']))
-    socketio.emit('redirect', url_for('room', room_id=new_room['id']), room=room)
+    socketio.emit('redirect', url_for('create_room', room_id=new_room['id']), room=room)
 
 
 @socketio.on('redirect to CreateDeck')
@@ -129,7 +136,6 @@ def save_deck(data):
         socketio.emit('message', 'message_deckname_is_using', room=room)
 
 
-
 """ Edit deck page """
 
 
@@ -164,40 +170,50 @@ def clear_tmp():
         os.remove(f)
 
 
+""" Create room page """
+
+
+@socketio.on('close game room')
+def close_game_room(room):
+    close_game_room(room)
+
+
+@socketio.on('update settings')
+def update_settings(mes):
+    set_settings(mes['room'], mes['settings'])
+
+
+@socketio.on('start game')
+def start_game(room):
+    socketio.emit('redirect', url_for('room', room_id=room['room']), room=room['client'])
+
+
 """ Room page """
 
 
 @socketio.on('join game room')
 def join_game_room(room):
-    join_room(room)
+    join_room(room['room'])
     increase_clients(room)
 
 
 @socketio.on('leave game room')
 def leave_game_room(room):
-    leave_room(room)
+    if not room['old']:
+        leave_room(room['room'])
     decrease_clients(room)
 
-@socketio.on('send room settings')
-def send_room_settings(room):
-    try:
-        config = configparser.RawConfigParser()
-        config.read('settings.properties')
-        sett = {'minCardsInRow': config['room']['minCardsInRow'],
-                'defaultCardsInRow': config['room']['defaultCardsInRow'],
-                'maxCardsInRow': config['room']['maxCardsInRow'],
-                'stepCardsInRow': config['room']['stepCardsInRow'],
-                'minCardHeight': config['room']['minCardHeight'],
-                'defaultCardHeight': config['room']['defaultCardHeight'],
-                'maxCardHeight': config['room']['maxCardHeight'],
-                'stepCardHeight': config['room']['stepCardHeight'],
-                'minCardFontSize': config['room']['minCardFontSize'],
-                'defaultCardFontSize': config['room']['defaultCardFontSize'],
-                'maxCardFontSize': config['room']['maxCardFontSize'],
-                'stepCardFontSize': config['room']['stepCardFontSize']}
-        socketio.emit('get room settings', sett, room=room)
-    except Exception:
-        app.logger.error('Error in config file')
+
+@socketio.on('send settings')
+def send_settings(room):
+    sett = get_settings(room['room'])
+    socketio.emit('get room settings', sett, room=room['client'])
+
+
+@socketio.on('send view change settings')
+def send_view_change_settings(room):
+    sett = get_default_settings()
+    socketio.emit('get view change settings', sett, room=room['client'])
 
 
 @socketio.on('prepare field')
@@ -215,19 +231,16 @@ def prepare_room(data):
 
 @socketio.on('send new cards')
 def send_new_cards(room):
-    new_cards = get_random_cards(room)
+    new_cards = get_new_cards(room)
     socketio.emit('get new cards', new_cards, room=room)
 
 
+@socketio.on('disconnect')
+def disconnect():
+    disconnect_client(request.sid)
+
+
 """ Common """
-
-
-@socketio.on('join single room')
-def join_single_room(room):
-    join_room(room)
-    app.logger.debug('Join to single room: ' + str(room))
-    #app.logger.warning('A warning occurred (%d apples)', 42)
-    #app.logger.error('An error occurred')
 
 
 @socketio.on('redirect to Start')
@@ -242,7 +255,26 @@ def send_languages(room):
     socketio.emit('get languages', lang, room=room)
 
 
+@socketio.on('send default settings')
+def send_default_settings(room):
+    sett = get_default_settings()
+    socketio.emit('get room settings', sett, room=room['client'])
+
+
 """ Database using """
+
+
+class DeleteClientThread(Thread):
+    def __init__(self, room, client):
+        Thread.__init__(self)
+        self.room = {
+            'room': room,
+            'client': client
+        }
+
+    def run(self):
+        time.sleep(15)
+        decrease_clients(self.room)
 
 
 def room_exists(room_id):
@@ -266,44 +298,99 @@ def generate_room_id():
     return id
 
 
+def disconnect_client(client):
+    for room in Room.objects():
+        if client in room.clients:
+            thread = DeleteClientThread(room.name, client)
+            thread.start()
+
+
 def increase_clients(room_id):
-    room = Room.objects(Q(name=room_id)).first()
-    room.clients += 1
-    app.logger.debug('Join game room: ' + str(room_id) + ". Current number of clients: " + str(room.clients))
+    room = Room.objects(Q(name=room_id['room'])).first()
+    room.clients.append(room_id['client'])
+    app.logger.debug('Join game room: ' + str(room_id['room']) + ". Current clients: " + str(room.clients))
     room.save()
 
 
 def decrease_clients(room_id):
+    room = Room.objects(Q(name=room_id['room'])).first()
+    if room_id['client'] in room.clients:
+        room.clients.remove(room_id['client'])
+        app.logger.debug('Leave game room: ' + str(room_id) + ". Current clients: " + str(room.clients))
+        if len(room.clients) == 0:
+            room.delete()
+            app.logger.debug('Close game room: ' + str(room_id))
+        else:
+            room.save()
+
+
+def close_room(room_id):
     room = Room.objects(Q(name=room_id)).first()
-    room.clients -= 1
-    app.logger.debug('Leave game room: ' + str(room_id) + ". Current number of clients: " + str(room.clients))
-    if room.clients == 0:
-        room.delete()
-        app.logger.debug('Close game room: ' + str(room_id))
-    else:
-        room.save()
+    room.delete()
+    app.logger.debug('Close game room: ' + str(room_id))
+
+
+def set_settings(room_id, settings):
+    room = Room.objects(Q(name=room_id)).first()
+    room.settings = settings
+    room.save()
+
+
+def get_settings(room_id):
+    room = Room.objects(Q(name=room_id)).first()
+    return room.settings
 
 
 def add_room(room):
-    new_room = Room(name=room['id'], decks=room['decks'],  clients=room['clients'])
+    decks = []
+    current_numbers = []
+    for deckname in room['decks']:
+        deck = Deck.objects(Q(name=deckname)).first()
+        cards = deck.cards
+        random.shuffle(cards)
+        if len(cards) > 1:
+            decks.append(cards)
+        else:
+            l = []
+            l.append(cards)
+            decks.append(l)
+        current_numbers.append(0)
+    time = datetime.datetime.utcnow
+    new_room = Room(name=room['id'], decks=decks, current_numbers=current_numbers, last_update=time)
     new_room.save()
+    delete_old_rooms()
 
 
-def get_random_cards(room_id):
+def get_new_cards(room_id):
     room = Room.objects(Q(name=room_id)).first()
     cards = []
-    for deck_name in room.decks:
-        deck = Deck.objects(Q(name=deck_name)).first()
-        card = random_card(deck.cards)
-        cards.append(card)
-    room.current_cards = cards
+    cur_nbs = room.current_numbers
+    decks = room.decks
+    for i in range(len(room.decks)):
+        if cur_nbs[i] + 1 < len(decks[i]):
+            cards.append(decks[i][cur_nbs[i] + 1])
+            cur_nbs[i] += 1
+        else:
+            sorted_cards = room.decks[i]
+            random_sort(sorted_cards)
+            room.decks[i] = sorted_cards
+            cards.append(sorted_cards[0])
+            cur_nbs[i] = 0
+    room.current_numbers = cur_nbs
     room.save()
+    renew_room_last_update(room_id)
     return cards
 
 
 def get_current_cards(room_id):
     room = Room.objects(Q(name=room_id)).first()
-    return room.current_cards
+    current_cards = []
+    cur_nbs = room.current_numbers
+    decks = room.decks
+    for i in range(len(room.decks)):
+        current_cards.append(decks[i][cur_nbs[i]])
+    renew_room_last_update(room_id)
+    return current_cards
 
 
 def get_deck_list():
@@ -344,7 +431,49 @@ def make_tmp_file(name):
     return file
 
 
+def renew_room_last_update(room_id):
+    room = Room.objects(Q(name=room_id)).first()
+    room.last_update = datetime.datetime.utcnow
+    room.save()
+
+
+def delete_old_rooms():
+    now = datetime.datetime.utcnow()
+    ttl = 259200
+    try:
+        config = configparser.RawConfigParser()
+        config.read('settings.properties')
+        ttl = config['room']['timeToLive']
+    except Exception:
+        app.logger.error('Error in config file')
+    for room in Room.objects():
+        print((now - room.last_update).total_seconds())
+        if ((now - room.last_update).total_seconds()) > float(ttl):
+            room.delete()
+
+
 """ Service logic """
+
+
+def get_default_settings():
+    try:
+        config = configparser.RawConfigParser()
+        config.read('settings.properties')
+        sett = {'minCardWidth': config['room']['minCardWidth'],
+            'defaultCardWidth': config['room']['defaultCardWidth'],
+            'maxCardWidth': config['room']['maxCardWidth'],
+            'stepCardWidth': config['room']['stepCardWidth'],
+            'minCardHeight': config['room']['minCardHeight'],
+            'defaultCardHeight': config['room']['defaultCardHeight'],
+            'maxCardHeight': config['room']['maxCardHeight'],
+            'stepCardHeight': config['room']['stepCardHeight'],
+            'minCardFontSize': config['room']['minCardFontSize'],
+            'defaultCardFontSize': config['room']['defaultCardFontSize'],
+            'maxCardFontSize': config['room']['maxCardFontSize'],
+            'stepCardFontSize': config['room']['stepCardFontSize']}
+        return sett
+    except Exception:
+        app.logger.error('Error in config file')
 
 
 def check_deck_name(name):
@@ -384,6 +513,10 @@ def parse_cards(cards, mode):
 def random_card(cards):
     r = random.randint(0, len(cards) - 1)
     return cards[r]
+
+
+def random_sort(cards):
+    random.shuffle(cards)
 
 
 def get_languages():

@@ -71,8 +71,6 @@
 
       socket.on('connect', function() {
         socket.emit('send languages', socket.id)
-
-        console.log(socket.id)
         socket.emit('send deck info', {
           'room': socket.id,
           'name': name
