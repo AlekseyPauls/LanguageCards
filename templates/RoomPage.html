@@ -305,9 +305,9 @@
       })
 
       $('#field').on('click', 'div', function() {
-        if (this.parent().class === "card") {
-          console.log("ok")
-        }
+        //if (this.parent().class === "card") {
+        //  console.log("ok")
+        //}
         document.getElementById("modalImage").src = this.childNodes[0].src
         document.getElementById("modalText").innerHTML = this.childNodes[1].innerHTML
         $('#modalContent').height(window.innerHeight * 0.7 + "px")
