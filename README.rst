@@ -35,5 +35,5 @@ Other settings
 
 Settings.properties:
 
-"timeToLive" - the of room live. Every room has attribute "last_update", which updated when something new happens in the room.
+"timeToLive" - time of room live. Every room has attribute "last_update", which updated when something new happens in the room.
 When the new room is created, all old rooms are checked. If more time elapsed before the date of rooms "last_update" than in the "timeToLive", this room is removed.
