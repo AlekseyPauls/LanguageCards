@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from flask import Flask, render_template, redirect, url_for, send_file, abort, request
-from flask_socketio import SocketIO, join_room, leave_room, rooms
+from flask import Flask, render_template, url_for, send_file, abort, request
+from flask_socketio import SocketIO, join_room, leave_room
 import random, os, glob, re, configparser, codecs, datetime
 from mongoengine import *
 from models import Room, Deck
@@ -14,18 +14,18 @@ app.config['SECRET_KEY'] = 'jsbcfsbfjefebw237u3gdbdc'
 socketio = SocketIO(app)
 
 # Test Config
-# MONGO = {
-#     'db': 'mongo',
-#     'host': 'localhost',
-#     'port': '27017',
-# }
-
-#App Config
 MONGO = {
     'db': 'mongo',
-    'host': 'db',
+    'host': 'localhost',
     'port': '27017',
 }
+
+#App Config
+# MONGO = {
+#     'db': 'mongo',
+#     'host': 'db',
+#     'port': '27017',
+# }
 
 MONGO_URI = os.environ.get('MONGO_URI', 'mongodb://%(host)s:%(port)s/%(db)s' % MONGO)
 db = connect(MONGO['db'], host=MONGO['host'])
@@ -37,6 +37,11 @@ db = connect(MONGO['db'], host=MONGO['host'])
 @app.route('/')
 def start():
     return render_template('./StartPage.html')
+
+
+@app.route('/health')
+def health():
+    return "Service is health"
 
 
 @app.route('/room/<room_id>')

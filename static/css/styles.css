@@ -1,32 +1,32 @@
 /* Mutable styles */
 
-// Place that contains other components
+/* Place that contains other components */
 div.container1 {
   width: 40%;
   margin-right: auto;
   margin-left: auto;
   text-align: center;
 }
-// Place that contains other components in the game room
+/* Place that contains other components in the game room */
 div.container2 {
   width: 70%;
   margin-right: auto;
   margin-left: auto;
   text-align: center;
 }
-// Default button
+/* Default button */
 .my-btn {
   width: 150px;
   height: 40px;
   font-size: 18px;
 }
-// New card button
+/* New card button */
 .new-cards-btn {
   width: 200px;
   height: 60px;
   font-size: 24px;
 }
-// Header for page name
+/* Header for page name */
 div.my-header {
   font-size: 22px;
   text-align: center;
@@ -34,7 +34,7 @@ div.my-header {
   margin-top: 15px;
   margin-bottom: 15px;
 }
-// Labels
+/* Labels */
 .langlabel {
   text-align: center;
   font-size: 16px;
@@ -43,18 +43,18 @@ div.my-header {
   text-align: center;
   font-size: 18px;
 }
-// Titles in the table-like constructions (not in the start page)
+/* Titles in the table-like constructions (not in the start page) */
 th, td {
   padding: 10px;
   font-size: 18px;
 }
-// Field for text input (description, cards)
+/* Field for text input (description, cards) */
 textarea.my-ta {
   width: 100%;
   height: 100%;
   font-size: 18px;
 }
-// Pop-up elements style (warning and info messages)
+/* Pop-up elements style (warning and info messages) */
 div.modal-text {
   font-size: 26px;
   width: 100%;
