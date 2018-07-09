@@ -2,14 +2,14 @@
 
 /* Place that contains other components */
 div.container1 {
-  width: 40%;
+  width: 50%;
   margin-right: auto;
   margin-left: auto;
   text-align: center;
 }
 /* Place that contains other components in the game room */
 div.container2 {
-  width: 70%;
+  width: 80%;
   margin-right: auto;
   margin-left: auto;
   text-align: center;
@@ -34,7 +34,7 @@ div.my-header {
   margin-top: 15px;
   margin-bottom: 15px;
 }
-/* Labels */
+/* Labels on languages list */
 .langlabel {
   text-align: center;
   font-size: 16px;
@@ -59,9 +59,14 @@ div.modal-text {
   font-size: 26px;
   width: 100%;
 }
+/* Font style in all app */
+.my-font {
+  font-family: "Arial";
+  font-style: normal;
+}
 
 /* Unchanged styles*/
-/* Is better to not change this styles */
+/* It is better to not change this styles */
 
 div.language-dropdawn {
   position: fixed;

@@ -1,29 +1,28 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <title>Edit deck</title>
+    <title>Edit deck</title>
 
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
-  integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
-  <link rel="stylesheet" href="/static/css/styles.css">
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.7.3/socket.io.min.js"></script>
-  <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
-  <script type="text/javascript" src="/static/js/jquery.i18n.properties.js"></script>
-
-</head>
+    <link rel="shortcut icon" href="/static/images/logo.png">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.7.3/socket.io.min.js"></script>
+    <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="/static/js/jquery.i18n.properties.js"></script>
+  </head>
   <body>
-    <div class="dropdown language-dropdawn">
+    <div class="dropdown language-dropdawn my-font">
       <button id="chooseLang" class="btn btn-primary dropdown-toggle my-btn" type="button" data-toggle="dropdown">&nbsp;</span></button>
       <ul id="langList" class="dropdown-menu dropdown-menu-right"></ul>
     </div>
-    <div class="text-center well" style="font-size: 26px;"><b id="pageName" style="">&nbsp;</b></div>
+    <div class="text-center well my-font" style="font-size: 26px;"><b id="pageName" style="">&nbsp;</b></div>
 
-    <div class="well container1">
+    <div class="well container1 my-font">
       <table width="100%">
         <tbody>
           <tr>
@@ -50,7 +49,7 @@
       </div>
     </div>
 
-    <div id="modal" class="modal fade" role="dialog">
+    <div id="modal" class="modal fade my-font" role="dialog">
       <div class="vertical-alignment-helper">
         <div class="modal-dialog vertical-align-center">
           <div class="modal-content">

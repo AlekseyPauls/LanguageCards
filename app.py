@@ -2,30 +2,35 @@
 
 from flask import Flask, render_template, url_for, send_file, abort, request
 from flask_socketio import SocketIO, join_room, leave_room
-import random, os, glob, re, configparser, codecs, datetime
+import random, os, glob, re, configparser, codecs, datetime, time, sys, logging, json_logging
 from mongoengine import *
 from models import Room, Deck
 from threading import Thread
-import time
 
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'jsbcfsbfjefebw237u3gdbdc'
 socketio = SocketIO(app)
+json_logging.ENABLE_JSON_LOGGING = True
+json_logging.init(framework_name='flask')
+json_logging.init_request_instrument(app)
+logger = logging.getLogger("test-logger")
+logger.setLevel(logging.DEBUG)
+logger.addHandler(logging.StreamHandler(sys.stdout))
 
 # Test Config
-MONGO = {
-    'db': 'mongo',
-    'host': 'localhost',
-    'port': '27017',
-}
-
-#App Config
 # MONGO = {
 #     'db': 'mongo',
-#     'host': 'db',
+#     'host': 'localhost',
 #     'port': '27017',
 # }
+
+#App Config
+MONGO = {
+    'db': 'mongo',
+    'host': 'db',
+    'port': '27017',
+}
 
 MONGO_URI = os.environ.get('MONGO_URI', 'mongodb://%(host)s:%(port)s/%(db)s' % MONGO)
 db = connect(MONGO['db'], host=MONGO['host'])
@@ -98,6 +103,7 @@ def start_room(data):
     new_room['decks'] = data['decks']
     add_room(new_room)
     app.logger.debug('Created game room with id: ' + str(new_room['id']))
+    #logger.info('Created game room with id: ' + str(new_room['id']))
     socketio.emit('redirect', url_for('create_room', room_id=new_room['id']), room=room)
 
 
@@ -116,7 +122,6 @@ def redirect_to_EditDeck(data):
 
 @socketio.on('save deck')
 def save_deck(data):
-    print(data)
     room = data['room']
     deck = {}
     deck['name'] = data['name']
@@ -250,7 +255,6 @@ def disconnect():
 
 @socketio.on('redirect to Start')
 def redirect_to_Start(room):
-    print('redirect of ' + room)
     socketio.emit('redirect', url_for('start'), room=room)
 
 
@@ -314,6 +318,7 @@ def increase_clients(room_id):
     room = Room.objects(Q(name=room_id['room'])).first()
     room.clients.append(room_id['client'])
     app.logger.debug('Join game room: ' + str(room_id['room']) + ". Current clients: " + str(room.clients))
+    #logger.info('Join game room: ' + str(room_id['room']) + ". Current clients: " + str(room.clients))
     room.save()
 
 
@@ -322,9 +327,12 @@ def decrease_clients(room_id):
     if room_id['client'] in room.clients:
         room.clients.remove(room_id['client'])
         app.logger.debug('Leave game room: ' + str(room_id) + ". Current clients: " + str(room.clients))
+        #logger.info('Leave game room: ' + str(room_id) + ". Current clients: " + str(room.clients))
         if len(room.clients) == 0:
-            room.delete()
-            app.logger.debug('Close game room: ' + str(room_id))
+            close_room(room_id['room'])
+            # room.delete()
+            # app.logger.debug('Close game room: ' + str(room_id))
+            # logger.info('Close game room: ' + str(room_id))
         else:
             room.save()
 
@@ -333,6 +341,7 @@ def close_room(room_id):
     room = Room.objects(Q(name=room_id)).first()
     room.delete()
     app.logger.debug('Close game room: ' + str(room_id))
+    #logger.info('Close game room: ' + str(room_id))
 
 
 def set_settings(room_id, settings):
@@ -451,8 +460,8 @@ def delete_old_rooms():
         ttl = config['room']['timeToLive']
     except Exception:
         app.logger.error('Error in config file')
+        #logger.info('Error in config file')
     for room in Room.objects():
-        print((now - room.last_update).total_seconds())
         if ((now - room.last_update).total_seconds()) > float(ttl):
             room.delete()
 
@@ -479,6 +488,7 @@ def get_default_settings():
         return sett
     except Exception:
         app.logger.error('Error in config file')
+        #logger.info('Error in config file')
 
 
 def check_deck_name(name):
@@ -526,19 +536,20 @@ def random_sort(cards):
 
 def get_languages():
     lang_dict = {}
-    path = "static/languages/"
+    path = 'static/languages/'
     files = os.listdir(path)
     for filename in files:
-        if (filename.count("_") == 0):
+        if (filename.count('_') == 0):
             lang_code = ""
         else:
-            lang_code = filename[filename.find("_") + 1 : filename.find('.')]
+            lang_code = filename[filename.find('_') + 1 : filename.find('.')]
         with codecs.open(path + filename, 'r', 'utf-8') as f:
             lines = f.readlines()
             if ((lines[0])[0] == '#' and is_properties(lines)):
                 lang_dict[lang_code] = lines[0][1 : len(lines[0]) - 1]
             else:
-                app.logger.debug("Wrong language file " + filename)
+                app.logger.debug('Wrong language file ' + filename)
+                #logger.info('Wrong language file ' + filename)
     return lang_dict
 
 
