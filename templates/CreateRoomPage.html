@@ -19,8 +19,7 @@
   <body>
     <div class="dropdown language-dropdawn my-font">
       <button id="chooseLang" class="btn btn-primary dropdown-toggle my-btn" type="button" data-toggle="dropdown">&nbsp;</button>
-      <ul id="langList" class="dropdown-menu dropdown-menu-right">
-      </ul>
+      <ul id="langList" class="dropdown-menu dropdown-menu-right"></ul>
     </div>
     <div class="text-center well my-font" style="font-size: 26px;"><b id="pageName">&nbsp;</b></div>
 
@@ -66,15 +65,16 @@
       socket.on('connect', function() {
         socket_id = socket.id
 
-        socket.emit('send default settings', {
-          'room' : room_id,
-          'client' : socket.id
-        })
-        socket.emit('send languages', socket.id)
+        if (!document.getElementById("langList").hasChildNodes()) {
+          socket.emit('send default settings', {
+            'room' : room_id,
+            'client' : socket.id
+          })
+          socket.emit('send languages', socket.id)
+        }
       })
 
       socket.on('get languages', function(msg) {
-        console.log(msg)
         for (var lang in msg) {
           var listElem = document.createElement("li")
           var langElem = document.createElement("a")

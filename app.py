@@ -7,10 +7,18 @@ from mongoengine import *
 from models import Room, Deck
 from threading import Thread
 
-
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'jsbcfsbfjefebw237u3gdbdc'
-socketio = SocketIO(app)
+try:
+    config = configparser.RawConfigParser()
+    config.read('settings.properties')
+    ptm = float(config['app']['socketPingTimeout'])
+    sk = config['app']['secretKey']
+    app.config['SECRET_KEY'] = sk
+    socketio = SocketIO(app, ping_timeout=ptm)
+except Exception:
+    app.logger.error('Error in config file')
+
+# Logging
 json_logging.ENABLE_JSON_LOGGING = True
 json_logging.init(framework_name='flask')
 json_logging.init_request_instrument(app)
@@ -19,18 +27,18 @@ logger.setLevel(logging.DEBUG)
 logger.addHandler(logging.StreamHandler(sys.stdout))
 
 # Test Config
-# MONGO = {
-#     'db': 'mongo',
-#     'host': 'localhost',
-#     'port': '27017',
-# }
-
-#App Config
 MONGO = {
     'db': 'mongo',
-    'host': 'db',
+    'host': 'localhost',
     'port': '27017',
 }
+
+#App Config
+# MONGO = {
+#     'db': 'mongo',
+#     'host': 'db',
+#     'port': '27017',
+# }
 
 MONGO_URI = os.environ.get('MONGO_URI', 'mongodb://%(host)s:%(port)s/%(db)s' % MONGO)
 db = connect(MONGO['db'], host=MONGO['host'])
@@ -280,9 +288,10 @@ class DeleteClientThread(Thread):
             'room': room,
             'client': client
         }
+        self.rct = float(config['app']['reconnectionTime'])
 
     def run(self):
-        time.sleep(15)
+        time.sleep(self.rct)
         decrease_clients(self.room)
 
 
@@ -307,12 +316,16 @@ def generate_room_id():
     return id
 
 
+def delete_client(room, client):
+    time.sleep(15)
+    decrease_clients({'room': room, 'client': client})
+
+
 def disconnect_client(client):
     for room in Room.objects():
         if client in room.clients:
             thread = DeleteClientThread(room.name, client)
             thread.start()
-
 
 def increase_clients(room_id):
     room = Room.objects(Q(name=room_id['room'])).first()
@@ -330,9 +343,6 @@ def decrease_clients(room_id):
         #logger.info('Leave game room: ' + str(room_id) + ". Current clients: " + str(room.clients))
         if len(room.clients) == 0:
             close_room(room_id['room'])
-            # room.delete()
-            # app.logger.debug('Close game room: ' + str(room_id))
-            # logger.info('Close game room: ' + str(room_id))
         else:
             room.save()
 
@@ -453,14 +463,15 @@ def renew_room_last_update(room_id):
 
 def delete_old_rooms():
     now = datetime.datetime.utcnow()
-    ttl = 259200
-    try:
-        config = configparser.RawConfigParser()
-        config.read('settings.properties')
-        ttl = config['room']['timeToLive']
-    except Exception:
-        app.logger.error('Error in config file')
-        #logger.info('Error in config file')
+    # ttl = 259200
+    # try:
+    #     config = configparser.RawConfigParser()
+    #     config.read('settings.properties')
+    #     ttl = config['room']['timeToLive']
+    # except Exception:
+    #     app.logger.error('Error in config file')
+    #     #logger.info('Error in config file')
+    ttl =  config['room']['timeToLive']
     for room in Room.objects():
         if ((now - room.last_update).total_seconds()) > float(ttl):
             room.delete()

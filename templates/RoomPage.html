@@ -104,12 +104,17 @@
           'client' : socket.id
         })
         closePreviousSocket()
-        socket.emit('send view change settings', {
-          'room' : room_id,
-          'client' : socket.id
-        })
+
+        console.log(document.getElementById("langList").childNodes.length)
+        if (document.getElementById("langList").childNodes.length === 13) {
+          console.log("start")
+          socket.emit('send view change settings', {
+            'room' : room_id,
+            'client' : socket.id
+          })
+          socket.emit('send languages', socket.id)
+        }
         setSettings()
-        socket.emit('send languages', socket.id)
       })
 
       socket.on('get room settings', function(mes) {
@@ -316,7 +321,7 @@
       })
 
       socket.on('disconnect', function() {
-        socket.disconnect()
+        //socket.disconnect()
         localStorage.setItem("previousSockets" + JSON.stringify(room_id), socket_id)
       })
 

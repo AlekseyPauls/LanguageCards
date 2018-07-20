@@ -69,11 +69,13 @@
       updateUILang(localStorage.getItem("userLang"))
 
       socket.on('connect', function() {
-        socket.emit('send languages', socket.id)
-        socket.emit('send deck info', {
-          'room': socket.id,
-          'name': name
-        })
+        if (!document.getElementById("langList").hasChildNodes()) {
+          socket.emit('send languages', socket.id)
+          socket.emit('send deck info', {
+            'room': socket.id,
+            'name': name
+          })
+        }
       })
 
       socket.on('get deck info', function(data) {
@@ -97,7 +99,6 @@
       })
 
       socket.on('get languages', function(msg) {
-        console.log(msg)
         for (var lang in msg) {
           var listElem = document.createElement("li")
           var langElem = document.createElement("a")

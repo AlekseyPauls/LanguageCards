@@ -104,17 +104,18 @@
       }
 
       socket.on('connect', function() {
-        socket.emit('send table', socket.id)
-        socket.emit('send languages', socket.id)
+        if (!document.getElementById("langList").hasChildNodes()) {
+          socket.emit('send table', socket.id)
+          socket.emit('send languages', socket.id)
+        }
       })
 
       socket.on('redirect', function(url) {
-        console.log(url)
         window.location = url
       })
 
       socket.on('make table', function(msg) {
-      console.log(msg)
+        t.rows().remove()
         for (var i = 0; i < msg.length; i++) {
           t.row.add([
             msg[i]['name'],
@@ -125,7 +126,6 @@
       })
 
       socket.on('get languages', function(msg) {
-        console.log(msg)
         for (var lang in msg) {
           var listElem = document.createElement("li")
           var langElem = document.createElement("a")
