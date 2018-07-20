@@ -27,18 +27,18 @@ logger.setLevel(logging.DEBUG)
 logger.addHandler(logging.StreamHandler(sys.stdout))
 
 # Test Config
-MONGO = {
-    'db': 'mongo',
-    'host': 'localhost',
-    'port': '27017',
-}
-
-#App Config
 # MONGO = {
 #     'db': 'mongo',
-#     'host': 'db',
+#     'host': 'localhost',
 #     'port': '27017',
 # }
+
+#App Config
+MONGO = {
+    'db': 'mongo',
+    'host': 'db',
+    'port': '27017',
+}
 
 MONGO_URI = os.environ.get('MONGO_URI', 'mongodb://%(host)s:%(port)s/%(db)s' % MONGO)
 db = connect(MONGO['db'], host=MONGO['host'])
