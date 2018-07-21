@@ -5,18 +5,43 @@ from flask_socketio import SocketIO, join_room, leave_room
 import random, os, glob, re, configparser, codecs, datetime, time, sys, logging, json_logging
 from mongoengine import *
 from models import Room, Deck
+from queue import Queue
 from threading import Thread
 
+
+""" Init section """
+
+
 app = Flask(__name__)
+
+# Read config
 try:
     config = configparser.RawConfigParser()
     config.read('settings.properties')
     ptm = float(config['app']['socketPingTimeout'])
     sk = config['app']['secretKey']
-    app.config['SECRET_KEY'] = sk
-    socketio = SocketIO(app, ping_timeout=ptm)
+    rct = float(config['app']['reconnectionTime'])
+    pw = int(config['app']['poolWorkers'])
+    ttl = config['room']['timeToLive']
+    MONGO = {
+        'db': config['db']['db'],
+        'host': config['db']['host'],
+        'port':  config['db']['port'],
+    }
 except Exception:
-    app.logger.error('Error in config file')
+    app.logger.error('Error in config file. Set default settings')
+    ptm = float(300)
+    sk = 'jsbcfsbfjefebw237u3gdbdc'
+    rct = 15
+    pw = 3
+    MONGO = {
+        'db': 'mongo',
+        'host': 'db',
+        'port': '27017',
+    }
+
+app.config['SECRET_KEY'] = sk
+socketio = SocketIO(app, ping_timeout=ptm)
 
 # Logging
 json_logging.ENABLE_JSON_LOGGING = True
@@ -26,20 +51,7 @@ logger = logging.getLogger("test-logger")
 logger.setLevel(logging.DEBUG)
 logger.addHandler(logging.StreamHandler(sys.stdout))
 
-# Test Config
-# MONGO = {
-#     'db': 'mongo',
-#     'host': 'localhost',
-#     'port': '27017',
-# }
-
-#App Config
-MONGO = {
-    'db': 'mongo',
-    'host': 'db',
-    'port': '27017',
-}
-
+# Database
 MONGO_URI = os.environ.get('MONGO_URI', 'mongodb://%(host)s:%(port)s/%(db)s' % MONGO)
 db = connect(MONGO['db'], host=MONGO['host'])
 
@@ -258,6 +270,12 @@ def disconnect():
     disconnect_client(request.sid)
 
 
+@socketio.on('mark up local storage')
+def mark_up_local_storage(data):
+    res = mark_up_unused(data['locstore'])
+    socketio.emit('delete unused settings', res, room=data['client'])
+
+
 """ Common """
 
 
@@ -281,18 +299,31 @@ def send_default_settings(room):
 """ Database using """
 
 
-class DeleteClientThread(Thread):
-    def __init__(self, room, client):
-        Thread.__init__(self)
-        self.room = {
-            'room': room,
-            'client': client
-        }
-        self.rct = float(config['app']['reconnectionTime'])
+class Worker(Thread):
+    def __init__(self, queue):
+        super(Worker, self).__init__()
+        self.q = queue
+        self.daemon = True
+        self.start()
 
     def run(self):
-        time.sleep(self.rct)
-        decrease_clients(self.room)
+        while True:
+            f, args, kwargs = self.q.get()
+            try:
+                f(*args, **kwargs)
+                print(self.getName())
+            except Exception as e:
+                self.q.task_done()
+
+
+class ThreadPool(object):
+    def __init__(self, n=3):
+        self.q = Queue(n)
+        for _ in range(n):
+            Worker(self.q)
+
+    def add_task(self, f, *args, **kwargs):
+        self.q.put((f, args, kwargs))
 
 
 def room_exists(room_id):
@@ -324,8 +355,13 @@ def delete_client(room, client):
 def disconnect_client(client):
     for room in Room.objects():
         if client in room.clients:
-            thread = DeleteClientThread(room.name, client)
-            thread.start()
+            pool.add_task(decrease_clients_with_delay, {'room': room.name, 'client': client})
+
+
+def decrease_clients_with_delay(room):
+    time.sleep(rct)
+    decrease_clients(room)
+
 
 def increase_clients(room_id):
     room = Room.objects(Q(name=room_id['room'])).first()
@@ -463,18 +499,22 @@ def renew_room_last_update(room_id):
 
 def delete_old_rooms():
     now = datetime.datetime.utcnow()
-    # ttl = 259200
-    # try:
-    #     config = configparser.RawConfigParser()
-    #     config.read('settings.properties')
-    #     ttl = config['room']['timeToLive']
-    # except Exception:
-    #     app.logger.error('Error in config file')
-    #     #logger.info('Error in config file')
-    ttl =  config['room']['timeToLive']
     for room in Room.objects():
         if ((now - room.last_update).total_seconds()) > float(ttl):
             room.delete()
+
+
+def mark_up_unused(locstore):
+    res = {}
+    for s in locstore:
+        if s.find('previousSocket') != -1 or s.find('settings') != -1:
+            room_id = re.findall('(\d+)', s)[0]
+
+            if Room.objects(Q(name=room_id)).first() is not None:
+                res[s] = True
+            else:
+                res[s] = False
+    return res
 
 
 """ Service logic """
@@ -577,4 +617,7 @@ def is_properties(lines):
 
 
 if __name__ == '__main__':
+    # ThreadPool
+    pool = ThreadPool(3)
+    # App
     socketio.run(app, host="0.0.0.0", port=5000, debug=True)

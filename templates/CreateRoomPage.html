@@ -21,30 +21,30 @@
       <button id="chooseLang" class="btn btn-primary dropdown-toggle my-btn" type="button" data-toggle="dropdown">&nbsp;</button>
       <ul id="langList" class="dropdown-menu dropdown-menu-right"></ul>
     </div>
-    <div class="text-center well my-font" style="font-size: 26px;"><b id="pageName">&nbsp;</b></div>
+    <div id="pageName" class="text-center well my-font page-header">&nbsp;</div>
 
     <div class="well container2 my-font" >
-      <div class="text-center well" style="font-size: 26px;"><b id="headerView">&nbsp;</b></div>
+      <div id="headerView" class="text-center well my-header">&nbsp;</div>
       <div id="field"></div>
       <table style="width: 60%; margin-left: 20%; margin-top: 20px; margin-bottom: 20px;>">
         <tbody>
           <tr>
-            <td align="right" width="25%"><b id="labelCardWidth">&nbsp;</b></td>
-            <td><input type="range" min="1" max="5" class="form-control" id="inputCardWidth"
+            <td id="labelCardWidth" class="name-cell" align="right" width="25%">&nbsp;</td>
+            <td><input type="range" min="200" max="600" step="50" class="form-control" id="inputCardWidth"
               onchange="document.getElementById('cardWidth').innerHTML = this.value; makeCard()"></td>
-            <td align="left" width="10%"><b id="cardWidth">3</b></td>
+            <td id="cardWidth" class="name-cell" align="left" width="10%">3</td>
           </tr>
           <tr>
-            <td align="right" valign="top"><b id="labelCardHeight">&nbsp;</b></td>
+            <td id="labelCardHeight" class="name-cell" align="right" valign="top">&nbsp;</td>
             <td><input type="range" min="200" max="800" step="50" class="form-control" id="inputCardHeight"
               onchange="document.getElementById('cardHeight').innerHTML = this.value; makeCard()"></td>
-            <td align="left"><b id="cardHeight">380</b></td>
+            <td id="cardHeight" class="name-cell" align="left">380</td>
           </tr>
           <tr>
-            <td align="right" valign="top"><b id="labelCardFontSize">&nbsp;</b></td>
+            <td id="labelCardFontSize" class="name-cell" align="right" valign="top">&nbsp;</td>
             <td><input type="range" min="10" max="50" step="5" class="form-control" id="inputCardFontSize"
               onchange="document.getElementById('cardFontSize').innerHTML = this.value; makeCard()"></td>
-            <td align="left"><b id="cardFontSize">20</b></td>
+            <td id="cardFontSize" class="name-cell" align="left">20</td>
           </tr>
         </tbody>
       </table>
@@ -80,7 +80,7 @@
           var langElem = document.createElement("a")
           langElem.innerHTML = msg[lang]
           langElem.id = lang
-          langElem.className = "langlabel"
+          langElem.className = "lang-label"
           listElem.appendChild(langElem)
           document.getElementById("langList").appendChild(listElem)
         }

@@ -20,21 +20,21 @@
       <button id="chooseLang" class="btn btn-primary dropdown-toggle my-btn" type="button" data-toggle="dropdown">&nbsp;</span></button>
       <ul id="langList" class="dropdown-menu dropdown-menu-right"></ul>
     </div>
-    <div class="text-center well my-font" style="font-size: 26px;"><b id="pageName" style="">&nbsp;</b></div>
+    <div id="pageName" class="text-center well my-font page-header">&nbsp;</div>
 
     <div class="well container1 my-font">
       <table width="100%">
         <tbody>
           <tr>
-            <td align="right" width="15%"><b id="labelName">&nbsp;</b></td>
+            <td id="labelName" class="name-cell" align="right" width="15%">&nbsp;</td>
             <td><div id="name" style="font-size: 20px; text-align: left"></div></td>
           </tr>
           <tr>
-            <td align="right" valign="top"><b id="labelDescription">&nbsp;</b></td>
+            <td id="labelDescription" class="name-cell" align="right" valign="top">&nbsp;</td>
             <td height="150"><textarea id="description" class="form-control my-ta" readonly></textarea></td>
           </tr>
           <tr>
-            <td align="right" valign="top"><b id="labelCards">&nbsp;</b></td>
+            <td id="labelCards" class="name-cell" align="right" valign="top">&nbsp;</td>
             <td height="300"><textarea id="cards" class="form-control my-ta"></textarea></td>
           </tr>
         </tbody>
@@ -53,7 +53,7 @@
       <div class="vertical-alignment-helper">
         <div class="modal-dialog vertical-align-center">
           <div class="modal-content">
-            <div id="message" class="modal-body" style="text-align: center; font-size: 20px"></div>
+            <div id="message" class="modal-body message-label"></div>
             <div class="modal-footer">
               <button id="close" type="button" class="btn btn-default" data-dismiss="modal">&nbsp;</button>
             </div>
@@ -104,7 +104,7 @@
           var langElem = document.createElement("a")
           langElem.innerHTML = msg[lang]
           langElem.id = lang
-          langElem.className = "langlabel"
+          langElem.className = "lang-label"
           listElem.appendChild(langElem)
           document.getElementById("langList").appendChild(listElem)
         }

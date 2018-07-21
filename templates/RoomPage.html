@@ -21,15 +21,15 @@
     <div class="dropdown language-dropdawn my-font">
       <button id="settings" class="btn btn-primary dropdown-toggle my-btn" type="button" data-toggle="dropdown">&nbsp;</button>
       <ul id="langList" class="dropdown-menu dropdown-menu-right">
-        <li><a id="labelLanguage" class="headerlabel">&nbsp;</a></li>
-        <li><a id="labelView" class="headerlabel">&nbsp;</a></li>
+        <li><a id="labelLanguage" class="header-label">&nbsp;</a></li>
+        <li><a id="labelView" class="header-label">&nbsp;</a></li>
         <li class="divider"></li>
-        <li><a id="copy" class="headerlabel">&nbsp;</a></li>
+        <li><a id="copy" class="header-label">&nbsp;</a></li>
         <li class="divider"></li>
-        <li><a id="back" class="headerlabel">&nbsp;</a></li>
+        <li><a id="back" class="header-label">&nbsp;</a></li>
       </ul>
     </div>
-    <div class="text-center well my-font" style="font-size: 26px;"><b id="pageName">&nbsp;</b></div>
+    <div id="pageName" class="text-center well my-font page-header">&nbsp;</div>
 
     <div id="container" class="well container2">
       <div id="field"></div>
@@ -55,26 +55,26 @@
       <div class="vertical-alignment-helper">
         <div class="modal-dialog vertical-align-center">
           <div class="modal-content" style="width: 100%; padding: 30px;">
-            <div class="text-center well" style="font-size: 26px;"><b id="headerView">&nbsp;</b></div>
+            <div class="text-center well my-header"><b id="headerView">&nbsp;</b></div>
             <table width="100%">
               <tbody>
                 <tr>
-                  <td align="right" width="25%"><b id="labelCardWidth">&nbsp;</b></td>
+                  <td id="labelCardWidth" class="name-cell" align="right" width="25%">&nbsp;</td>
                   <td><input type="range" min="200" max="600" step="50" class="form-control" id="inputCardWidth"
-                    onchange="document.getElementById('cardWidth').innerHTML = this.value;"></td>
-                  <td align="left" width="10%"><b id="cardWidth">400</b></td>
+                    onchange="document.getElementById('cardWidth').innerHTML = this.value; "></td>
+                  <td id="cardWidth" class="name-cell" align="left" width="10%">400</td>
                 </tr>
                 <tr>
-                  <td align="right" valign="top"><b id="labelCardHeight">&nbsp;</b></td>
+                  <td id="labelCardHeight" class="name-cell" align="right" valign="top">&nbsp;</td>
                   <td><input type="range" min="200" max="800" step="50" class="form-control" id="inputCardHeight"
                     onchange="document.getElementById('cardHeight').innerHTML = this.value;"></td>
-                  <td align="left"><b id="cardHeight">380</b></td>
+                  <td id="cardHeight" class="name-cell" align="left">380</td>
                 </tr>
                 <tr>
-                  <td align="right" valign="top"><b id="labelCardFontSize">&nbsp;</b></td>
+                  <td id="labelCardFontSize" class="name-cell" align="right" valign="top">&nbsp;</td>
                   <td><input type="range" min="10" max="50" step="5" class="form-control" id="inputCardFontSize"
                     onchange="document.getElementById('cardFontSize').innerHTML = this.value;"></td>
-                  <td align="left"><b id="cardFontSize">20</b></td>
+                  <td id="cardFontSize" class="name-cell" align="left">20</td>
                 </tr>
               </tbody>
             </table>
@@ -115,6 +115,8 @@
           socket.emit('send languages', socket.id)
         }
         setSettings()
+
+        clearLocalStorage()
       })
 
       socket.on('get room settings', function(mes) {
@@ -229,6 +231,15 @@
         }
       })
 
+      socket.on('delete unused settings', function(msg) {
+        for (var s in msg) {
+          if (!msg[s]) {
+            localStorage.removeItem(s)
+            console.log(s)
+          }
+        }
+      })
+
       socket.on('redirect', function(url) {
         window.location = url
       })
@@ -251,7 +262,7 @@
           langElem = document.createElement("a")
           langElem.innerHTML = msg[lang]
           langElem.id = lang
-          langElem.className = "langlabel"
+          langElem.className = "lang-label"
           listElem.appendChild(langElem)
           langList.insertBefore(listElem, langList.childNodes[i + 3])
           i += 1;
@@ -322,7 +333,7 @@
 
       socket.on('disconnect', function() {
         //socket.disconnect()
-        localStorage.setItem("previousSockets" + JSON.stringify(room_id), socket_id)
+        localStorage.setItem("previousSocket" + JSON.stringify(room_id), socket_id)
       })
 
       window.onresize = function(event) {
@@ -406,6 +417,19 @@
         for (var i = field.childNodes.length - 1; i > -1; i--) {
           field.childNodes[i].remove()
         }
+      }
+
+      function clearLocalStorage() {
+        var res = []
+        for (var key in localStorage) {
+          res.push(key)
+        }
+        console.log(res)
+        socket.emit('mark up local storage', {
+            'room' : room_id,
+            'client' : socket.id,
+            'locstore' : res
+        })
       }
 
       function updateUILang(lang) {
