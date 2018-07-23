@@ -284,6 +284,11 @@ def mark_up_local_storage(data):
     socketio.emit('delete unused settings', res, room=data['client'])
 
 
+@socketio.on('redirect to mobile game room')
+def redirect_to_mobile_game_room(room):
+    socketio.emit('redirect', url_for('m_room', room_id=room['room']), room=room['client'])
+
+
 """ Common """
 
 

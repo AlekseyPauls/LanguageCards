@@ -99,24 +99,31 @@
       socket.on('connect', function() {
         socket_id = socket.id
 
-        socket.emit('join game room', {
-          'room' : room_id,
-          'client' : socket.id
-        })
-        closePreviousSocket()
-
-        console.log(document.getElementById("langList").childNodes.length)
-        if (document.getElementById("langList").childNodes.length === 13) {
-          console.log("start")
-          socket.emit('send view change settings', {
+        if ( /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ) {
+          socket.emit('redirect to mobile game room', {
             'room' : room_id,
             'client' : socket.id
           })
-          socket.emit('send languages', socket.id)
-        }
-        setSettings()
+        } else {
+          socket.emit('join game room', {
+            'room' : room_id,
+            'client' : socket.id
+          })
+          closePreviousSocket()
 
-        clearLocalStorage()
+          console.log(document.getElementById("langList").childNodes.length)
+          if (document.getElementById("langList").childNodes.length === 13) {
+            console.log("start")
+            socket.emit('send view change settings', {
+              'room' : room_id,
+              'client' : socket.id
+            })
+            socket.emit('send languages', socket.id)
+          }
+          setSettings()
+
+          clearLocalStorage()
+        }
       })
 
       socket.on('get room settings', function(mes) {
