@@ -77,6 +77,14 @@ def room(room_id):
         abort(404)
 
 
+@app.route('/m.room/<room_id>')
+def m_room(room_id):
+    if room_exists(room_id):
+        return render_template('./MobileRoomPage.html', room_id=room_id)
+    else:
+        abort(404)
+
+
 @app.route('/create_deck')
 def create_deck():
     return render_template('./CreateDeckPage.html')

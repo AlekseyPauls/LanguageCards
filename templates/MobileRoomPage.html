@@ -19,7 +19,7 @@
   </head>
   <body>
     <div class="dropdown language-dropdawn my-font">
-      <button id="settings" class="btn btn-primary dropdown-toggle my-btn" type="button" data-toggle="dropdown">&nbsp;</button>
+      <span id="settings" class="glyphicon glyphicon-cog" style="font-size: 30px;" data-toggle="dropdown"></span>
       <ul id="langList" class="dropdown-menu dropdown-menu-right">
         <li><a id="labelLanguage" class="header-label">&nbsp;</a></li>
         <li><a id="labelView" class="header-label">&nbsp;</a></li>
@@ -31,12 +31,10 @@
     </div>
     <div id="pageName" class="text-center well my-font page-header">&nbsp;</div>
 
-    <div id="container" class="well container2">
-      <div id="field"></div>
-      <div class="text-center">
-        <div class="btn-group" style="margin-top: 15px; margin-bottom: 15px;">
-          <button type="button" id="newCards" class="btn btn-success btn-block new-cards-btn">&nbsp;</button>
-        </div>
+    <div id="field"></div>
+    <div class="text-center">
+      <div class="btn-group" style="margin-top: 15px; margin-bottom: 15px;">
+        <button type="button" id="newCards" class="btn btn-success btn-block new-cards-btn">&nbsp;</button>
       </div>
     </div>
 
@@ -51,7 +49,7 @@
       </div>
     </div>
 
-    <div id="modalSettings" class="modal fade container1 my-font" role="dialog">
+    <div id="modalSettings" class="modal fade my-font" role="dialog">
       <div class="vertical-alignment-helper">
         <div class="modal-dialog vertical-align-center">
           <div class="modal-content" style="width: 100%; padding: 30px;">
@@ -78,11 +76,21 @@
                 </tr>
               </tbody>
             </table>
-            <div class="btn-group" style="margin-top: 15px;">
-              <button type="button" id="accept" class="btn btn-success btn-block my-btn">&nbsp;</button>
-              <button type="button" id="default" class="btn btn-primary my-btn">&nbsp;</button>
-              <button type="button" id="cancel" class="btn btn-info my-btn">&nbsp;</button>
-            </div>
+            <table style="width: 100%;">
+              <tbody>
+                <tr>
+                  <td style="width: 33%; text-align: center;">
+                    <span id="accept" class="glyphicon glyphicon-ok" style="font-size: 30px; padding: 15px;"></span>
+                  </td>
+                  <td style="width: 33%; text-align: center;">
+                    <span id="default" class="glyphicon glyphicon-refresh" style="font-size: 30px; padding: 15px;"></span>
+                  </td>
+                  <td style="width: 33%; text-align: center;">
+                    <span id="cancel" class="glyphicon glyphicon-remove" style="font-size: 30px; padding: 15px;"></span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
@@ -445,11 +453,7 @@
             $('#newCards').text($.i18n.prop('button_new_cards'))
             $('#back').text($.i18n.prop('button_back'))
             $('#copy').text($.i18n.prop('button_copy_url'))
-            $('#accept').text($.i18n.prop('button_accept'))
-            $('#default').text($.i18n.prop('button_default'))
-            $('#cancel').text($.i18n.prop('button_cancel'))
             $('#pageName').text($.i18n.prop('page_name_room'))
-            $('#settings').text($.i18n.prop('label_settings'))
             $('#labelCardWidth').text($.i18n.prop('label_card_width'))
             $('#labelCardHeight').text($.i18n.prop('label_card_height'))
             $('#labelCardFontSize').text($.i18n.prop('label_card_font_size'))
