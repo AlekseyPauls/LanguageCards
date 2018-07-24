@@ -99,36 +99,25 @@
       socket.on('connect', function() {
         socket_id = socket.id
 
-        if ( /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ) {
-          socket.emit('redirect to mobile game room', {
+        socket.emit('join game room', {
+          'room' : room_id,
+          'client' : socket.id
+        })
+        closePreviousSocket()
+
+        if (document.getElementById("langList").childNodes.length === 13) {
+          socket.emit('send view change settings', {
             'room' : room_id,
             'client' : socket.id
           })
-        } else {
-          socket.emit('join game room', {
-            'room' : room_id,
-            'client' : socket.id
-          })
-          closePreviousSocket()
-
-          console.log(document.getElementById("langList").childNodes.length)
-          if (document.getElementById("langList").childNodes.length === 13) {
-            console.log("start")
-            socket.emit('send view change settings', {
-              'room' : room_id,
-              'client' : socket.id
-            })
-            socket.emit('send languages', socket.id)
-          }
-          setSettings()
-
-          clearLocalStorage()
+          socket.emit('send languages', socket.id)
         }
+        setSettings()
+
+        clearLocalStorage()
       })
 
       socket.on('get room settings', function(mes) {
-        console.log('Receive settings')
-        console.log(mes)
         localStorage.setItem("settings" + JSON.stringify(room_id), JSON.stringify(mes))
         $('#cardWidth').text(mes['cardWidth'])
         $('#cardHeight').text(mes['cardHeight'])
@@ -147,7 +136,6 @@
       })
 
       socket.on('get view change settings', function(mes) {
-        console.log('Receive view change settings')
         $('#inputCardWidth').attr("min", mes["minCardWidth"])
         $('#inputCardHeight').attr("min", mes["minCardHeight"])
         $('#inputCardFontSize').attr("min", mes["minCardFontSize"])
@@ -162,7 +150,6 @@
       socket.on('make field', function(count) {
         clearField()
         settings = JSON.parse(localStorage.getItem("settings" + JSON.stringify(room_id)))
-        console.log(settings)
         decks_count = count
         var card_width = settings["cardWidth"]
         var cards_in_row
@@ -210,7 +197,6 @@
             field.appendChild(table)
           }
         }
-        console.log("table created")
       })
 
       socket.on('get new cards', function(cards) {
@@ -242,7 +228,6 @@
         for (var s in msg) {
           if (!msg[s]) {
             localStorage.removeItem(s)
-            console.log(s)
           }
         }
       })
@@ -331,9 +316,6 @@
       })
 
       $('#field').on('click', 'div', function() {
-        //if (this.parent().class === "card") {
-        //  console.log("ok")
-        //}
         document.getElementById("modalImage").src = this.childNodes[0].src
         document.getElementById("modalText").innerHTML = this.childNodes[1].innerHTML
         $('#modalContent').height(window.innerHeight * 0.7 + "px")
@@ -346,7 +328,6 @@
       })
 
       window.onresize = function(event) {
-        console.log("resize")
         setSettings()
       };
 
@@ -389,13 +370,11 @@
 
       function setSettings() {
         if (localStorage.getItem("settings" + JSON.stringify(room_id)) === null) {
-          console.log('No settings')
           socket.emit('send settings', {
             'room' : room_id,
             'client' : socket.id
           })
         } else {
-          console.log('Settings already set')
           prepareSettings()
           socket.emit('prepare field', {
             'room' : room_id,
@@ -410,7 +389,6 @@
 
       function prepareSettings() {
         settings = JSON.parse(localStorage.getItem("settings" + JSON.stringify(room_id)))
-        console.log(settings)
 
         $('#inputCardWidth').val(settings["cardWidth"])
         $('#inputCardHeight').val(settings["cardHeight"])
@@ -422,7 +400,6 @@
 
       function clearField() {
         var field = document.getElementById("field")
-        console.log(field.childNodes)
         for (var i = field.childNodes.length - 1; i > -1; i--) {
           field.childNodes[i].remove()
         }
@@ -433,7 +410,6 @@
         for (var key in localStorage) {
           res.push(key)
         }
-        console.log(res)
         socket.emit('mark up local storage', {
             'room' : room_id,
             'client' : socket.id,
@@ -465,7 +441,6 @@
             $('#headerView').text($.i18n.prop('label_view'))
 
             localStorage.setItem("userLang", lang)
-            console.log("Language set")
           }
         })
       }

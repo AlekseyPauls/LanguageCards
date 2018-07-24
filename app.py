@@ -2,6 +2,8 @@
 
 from flask import Flask, render_template, url_for, send_file, abort, request
 from flask_socketio import SocketIO, join_room, leave_room
+from flask_mobility import Mobility
+from flask_mobility.decorators import mobile_template
 import random, os, glob, re, configparser, codecs, datetime, time, sys, logging, json_logging
 from mongoengine import *
 from models import Room, Deck
@@ -42,6 +44,7 @@ except Exception:
 
 app.config['SECRET_KEY'] = sk
 socketio = SocketIO(app, ping_timeout=ptm)
+Mobility(app)
 
 # Logging
 json_logging.ENABLE_JSON_LOGGING = True
@@ -60,8 +63,9 @@ db = connect(MONGO['db'], host=MONGO['host'])
 
 
 @app.route('/')
-def start():
-    return render_template('./StartPage.html')
+@mobile_template('{mobile/}StartPage.html')
+def start(template):
+    return render_template(template)
 
 
 @app.route('/health')
@@ -70,38 +74,34 @@ def health():
 
 
 @app.route('/room/<room_id>')
-def room(room_id):
+@mobile_template('{mobile/}RoomPage.html')
+def room(template, room_id):
     if room_exists(room_id):
-        return render_template('./RoomPage.html', room_id=room_id)
-    else:
-        abort(404)
-
-
-@app.route('/m.room/<room_id>')
-def m_room(room_id):
-    if room_exists(room_id):
-        return render_template('./MobileRoomPage.html', room_id=room_id)
+        return render_template(template, room_id=room_id)
     else:
         abort(404)
 
 
 @app.route('/create_deck')
-def create_deck():
-    return render_template('./CreateDeckPage.html')
+@mobile_template('{mobile/}CreateDeckPage.html')
+def create_deck(template):
+    return render_template(template)
 
 
 @app.route('/create_room/<room_id>')
-def create_room(room_id):
+@mobile_template('{mobile/}CreateRoomPage.html')
+def create_room(template, room_id):
     if room_exists(room_id):
-        return render_template('./CreateRoomPage.html', room_id=room_id)
+        return render_template(template, room_id=room_id)
     else:
         abort(404)
 
 
 @app.route('/edit_deck/<name>')
-def edit_deck(name):
+@mobile_template('{mobile/}EditDeckPage.html')
+def edit_deck(template, name):
     if deck_exists(name):
-        return render_template('./EditDeckPage.html', name=name)
+        return render_template(template, name=name)
     else:
         abort(404)
 
@@ -282,11 +282,6 @@ def disconnect():
 def mark_up_local_storage(data):
     res = mark_up_unused(data['locstore'])
     socketio.emit('delete unused settings', res, room=data['client'])
-
-
-@socketio.on('redirect to mobile game room')
-def redirect_to_mobile_game_room(room):
-    socketio.emit('redirect', url_for('m_room', room_id=room['room']), room=room['client'])
 
 
 """ Common """

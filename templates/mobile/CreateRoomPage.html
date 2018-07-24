@@ -18,15 +18,18 @@
   </head>
   <body>
     <div class="dropdown language-dropdawn my-font">
-      <button id="chooseLang" class="btn btn-primary dropdown-toggle my-btn" type="button" data-toggle="dropdown">&nbsp;</button>
-      <ul id="langList" class="dropdown-menu dropdown-menu-right"></ul>
+      <span id="settings" class="glyphicon glyphicon-cog" style="font-size: 30px;" data-toggle="dropdown"></span>
+      <ul id="langList" class="dropdown-menu dropdown-menu-right">
+        <li><a id="labelLanguage" class="header-label">&nbsp;</a></li>
+        <li class="divider"></li>
+      </ul>
     </div>
     <div id="pageName" class="text-center well my-font page-header">&nbsp;</div>
 
-    <div class="well container2 my-font" >
-      <div id="headerView" class="text-center well my-header">&nbsp;</div>
+    <div class="my-font">
+      <div id="headerView" class="text-center my-header">&nbsp;</div>
       <div id="field"></div>
-      <table style="width: 60%; margin-left: 20%; margin-top: 20px; margin-bottom: 20px;>">
+      <table style="width: 100%; margin-top: 20px; margin-bottom: 20px;>">
         <tbody>
           <tr>
             <td id="labelCardWidth" class="name-cell" align="right" width="25%">&nbsp;</td>
@@ -49,10 +52,10 @@
         </tbody>
       </table>
       <div class="text-center">
-        <div class="btn-group" style="margin-top: 15px;">
-          <button type="button" id="start" class="btn btn-success btn-block my-btn">&nbsp;</button>
-          <button type="button" id="copy" class="btn btn-primary my-btn">&nbsp;</button>
-          <button type="button" id="back" class="btn btn-info my-btn">&nbsp;</button>
+        <div class="btn-group" style="padding: 30px;">
+          <button type="button" id="start" class="btn-success my-btn">&nbsp;</button>
+          <button type="button" id="copy" class="btn-primary my-btn">&nbsp;</button>
+          <button type="button" id="back" class="btn-info my-btn">&nbsp;</button>
         </div>
       </div>
     </div>
@@ -65,7 +68,7 @@
       socket.on('connect', function() {
         socket_id = socket.id
 
-        if (!document.getElementById("langList").hasChildNodes()) {
+        if (document.getElementById("langList").childNodes.length === 5) {
           socket.emit('send default settings', {
             'room' : room_id,
             'client' : socket.id
@@ -141,6 +144,10 @@
           'client' : socket.id
         })
       })
+
+      window.onorientationchange = function(event) {
+        location.reload()
+      }
 
       function makeCard() {
         var cardWidth = $('#cardWidth').text()

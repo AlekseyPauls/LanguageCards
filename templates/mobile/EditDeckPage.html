@@ -17,17 +17,20 @@
   </head>
   <body>
     <div class="dropdown language-dropdawn my-font">
-      <button id="chooseLang" class="btn btn-primary dropdown-toggle my-btn" type="button" data-toggle="dropdown">&nbsp;</span></button>
-      <ul id="langList" class="dropdown-menu dropdown-menu-right"></ul>
+      <span id="settings" class="glyphicon glyphicon-cog" style="font-size: 30px;" data-toggle="dropdown"></span>
+      <ul id="langList" class="dropdown-menu dropdown-menu-right">
+        <li><a id="labelLanguage" class="header-label">&nbsp;</a></li>
+        <li class="divider"></li>
+      </ul>
     </div>
     <div id="pageName" class="text-center well my-font page-header">&nbsp;</div>
 
-    <div class="well container1 my-font">
+    <div class="my-font">
       <table width="100%">
         <tbody>
           <tr>
             <td id="labelName" class="name-cell" align="right" width="15%">&nbsp;</td>
-            <td><div id="name" style="font-size: 20px; text-align: left"></div></td>
+            <td><div id="name" style="text-align: left"></div></td>
           </tr>
           <tr>
             <td id="labelDescription" class="name-cell" align="right" valign="top">&nbsp;</td>
@@ -41,10 +44,10 @@
       </table>
       <div class="text-center">
         <div class="btn-group" style="padding: 30px;">
-          <button type="button" id="save" class="btn btn-success my-btn">&nbsp;</button>
-          <button type="button" id="export" class="btn btn-primary my-btn">&nbsp;</button>
-          <button type="button" id="delete" class="btn btn-warning my-btn">&nbsp;</button>
-          <button type="button" id="back" class="btn btn-info my-btn">&nbsp;</button>
+          <button type="button" id="save" class="btn-success my-btn">&nbsp;</button>
+          <button type="button" id="export" class="btn-primary my-btn">&nbsp;</button>
+          <button type="button" id="delete" class="btn-warning my-btn">&nbsp;</button>
+          <button type="button" id="back" class="btn-info my-btn">&nbsp;</button>
         </div>
       </div>
     </div>
@@ -69,7 +72,7 @@
       updateUILang(localStorage.getItem("userLang"))
 
       socket.on('connect', function() {
-        if (!document.getElementById("langList").hasChildNodes()) {
+        if (document.getElementById("langList").childNodes.length === 5) {
           socket.emit('send languages', socket.id)
           socket.emit('send deck info', {
             'room': socket.id,
@@ -156,6 +159,7 @@
             $('#labelDescription').text($.i18n.prop('label_description') + ": ")
             $('#labelCards').text($.i18n.prop('label_cards') + ": ")
             $('#chooseLang').text($.i18n.prop('label_choose_language'))
+            $('#labelLanguage').text($.i18n.prop('label_language') + ":")
 
             localStorage.setItem("userLang", lang)
 	      }

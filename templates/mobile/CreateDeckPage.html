@@ -18,12 +18,15 @@
 </head>
   <body>
     <div class="dropdown language-dropdawn my-font">
-      <button id="chooseLang" class="btn btn-primary dropdown-toggle my-btn" type="button" data-toggle="dropdown">&nbsp;</button>
-      <ul id="langList" class="dropdown-menu dropdown-menu-right"></ul>
+      <span id="settings" class="glyphicon glyphicon-cog" style="font-size: 30px;" data-toggle="dropdown"></span>
+      <ul id="langList" class="dropdown-menu dropdown-menu-right">
+        <li><a id="labelLanguage" class="header-label">&nbsp;</a></li>
+        <li class="divider"></li>
+      </ul>
     </div>
     <div id="pageName" class="text-center well my-font page-header">&nbsp;</div>
 
-    <div class="well container1 my-font">
+    <div class="my-font">
       <table width="100%">
         <tbody>
           <tr>
@@ -45,15 +48,15 @@
                 <input type="file" id="file" accept="text/" style="display: none;">
                 <span id="import">&nbsp;</span>
               </label>
-              <input type="text" id="filename" class="filename my-input" disabled>
+              <input type="text" id="filename" class="filename my-input my-btn" disabled>
             </td>
           </tr>
         </tbody>
       </table>
       <div class="text-center">
         <div class="btn-group" style="padding: 30px;">
-          <button type="button" id="save" class="btn btn-success my-btn">&nbsp;</button>
-          <button type="button" id="back" class="btn btn-primary my-btn">&nbsp;</button>
+          <button type="button" id="save" class="btn-success my-btn">&nbsp;</button>
+          <button type="button" id="back" class="btn-primary my-btn">&nbsp;</button>
         </div>
       </div>
     </div>
@@ -76,7 +79,7 @@
       updateUILang(localStorage.getItem("userLang"))
 
       socket.on('connect', function() {
-        if (!document.getElementById("langList").hasChildNodes()) {
+        if (document.getElementById("langList").childNodes.length === 5) {
           socket.emit('send languages', socket.id)
         }
       })
@@ -160,7 +163,7 @@
             $('#cards').attr("placeholder", $.i18n.prop('input_cards'))
             $('#fileLabel').text($.i18n.prop('label_from_file') + ": ")
             $('#import').text($.i18n.prop('label_import'))
-            $('#chooseLang').text($.i18n.prop('label_choose_language'))
+            $('#labelLanguage').text($.i18n.prop('label_language') + ":")
 
             localStorage.setItem("userLang", lang)
 	      }
