@@ -1,6 +1,12 @@
-==============
-Language cards
-==============
+===========
+Description
+===========
+
+This is an application to help with online lessons in foreign languages. Participants can join a pre-established game room to see cards with words or pictures that are the same for everyone and perform assignments by verbal agreement.
+
+=======================
+Usage and configuration
+=======================
 
 ---
 Run
