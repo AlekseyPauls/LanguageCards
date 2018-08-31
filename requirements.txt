@@ -3,4 +3,4 @@ Flask-SocketIO==2.9.6
 Flask-Mobility==0.1.1
 mongoengine==0.15.0
 ConfigParser==3.5.0
-json-logging==0.0.1
+logmatic-python==0.1.7

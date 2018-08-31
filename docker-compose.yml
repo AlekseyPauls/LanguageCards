@@ -8,7 +8,6 @@ services:
     links:
       - db
     build: .
-    command: bash -c "pip3 install -r requirements.txt && python3 ./app.py"
     volumes:
       - .:/code
     ports:
