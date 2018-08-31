@@ -4,3 +4,4 @@ Flask-Mobility==0.1.1
 mongoengine==0.15.0
 ConfigParser==3.5.0
 logmatic-python==0.1.7
+eventlet==0.24.1
